@@ -1,9 +1,9 @@
 from app.models.club import Club
-from app.db import db
+from app import db
 
 class ClubRepository:
     def __init__(self):
-        self.db = db
+        pass
 
     def get_all(self):
         return Club.query.all()
