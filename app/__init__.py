@@ -25,6 +25,6 @@ def create_app():
 
     # Register blueprints
     from app.api.club import bp as club_bp
-    app.register_blueprint(club_bp, url_prefix='/api/club')
+    app.register_blueprint(club_bp, url_prefix='/api/v1/club')
 
     return app

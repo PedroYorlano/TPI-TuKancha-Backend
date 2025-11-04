@@ -2,7 +2,7 @@ from . import db
 from datetime import datetime
 
 class Cancha(db.Model):
-    __tablename__ = 'canchas'
+    __tablename__ = 'cancha'
     
     id = db.Column(db.Integer, primary_key=True)
     club_id = db.Column(db.Integer, db.ForeignKey('club.id'), nullable=False)

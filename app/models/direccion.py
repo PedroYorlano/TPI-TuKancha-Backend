@@ -18,7 +18,7 @@ class Direccion(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # One direccion puede aplicarse a varios clubes en algunos modelos
-    clubes = db.relationship("Club", backref="direccion")
+    clubes = db.relationship("Club", back_populates="direccion")
 
     def __repr__(self):
         return f"<Direccion {self.calle} {self.numero}>"
