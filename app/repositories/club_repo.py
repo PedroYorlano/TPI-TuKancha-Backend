@@ -12,14 +12,8 @@ class ClubRepository:
         return Club.query.get(id)
     
     def create(self, club):
-        self.db.session.add(club)
-        self.db.session.commit()
-        return club
-    
-    def update(self, club):
-        self.db.session.commit()
+        db.session.add(club)
         return club
     
     def delete(self, club):
-        self.db.session.delete(club)
-        self.db.session.commit()
+        db.session.delete(club)
