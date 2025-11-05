@@ -3,8 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 from .config import Config
-from .api.club import bp as club_bp
-from .api.cancha import bp_canchas
+from .api.club import bp_club
+from .api.cancha import bp_cancha
+from .api.reserva import bp_reserva
 
 app = Flask(__name__)
 db = SQLAlchemy()
@@ -19,8 +20,9 @@ def create_app():
     db.init_app(app)
     ma.init_app(app)
 
-    app.register_blueprint(club_bp)
-    app.register_blueprint(bp_canchas)
+    app.register_blueprint(bp_club)
+    app.register_blueprint(bp_cancha)
+    app.register_blueprint(bp_reserva)
 
     return app
 

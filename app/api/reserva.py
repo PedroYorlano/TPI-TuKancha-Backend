@@ -5,7 +5,7 @@ from app.schemas.reserva_schema import reserva_schema, reservas_schema
 
 bp_reserva = Blueprint("reserva", __name__, url_prefix="/api/v1/reservas")
 
-reserva_service = ReservaService(db)
+reserva_service = ReservaService()
 
 @bp_reserva.get("/")
 def get_all():

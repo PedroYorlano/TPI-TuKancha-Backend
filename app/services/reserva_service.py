@@ -6,9 +6,9 @@ from app import db
 from datetime import datetime
 
 class ReservaService:
-    def __init__(self, db):
+    def __init__(self):
         self.db = db
-        self.reserva_repo = ReservaRepository(db)
+        self.reserva_repo = ReservaRepository()
 
     def get_all(self):
         return self.reserva_repo.get_all()

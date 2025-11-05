@@ -7,7 +7,7 @@ class Reserva(db.Model):
     __tablename__ = "reserva"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    cancha_id = db.Column(db.Integer, db.ForeignKey("canchas.id"), nullable=False)
+    cancha_id = db.Column(db.Integer, db.ForeignKey("cancha.id"), nullable=False)
     cliente_nombre = db.Column(db.String(120), nullable=False)
     cliente_telefono = db.Column(db.String(30))
     cliente_email = db.Column(db.String(120))

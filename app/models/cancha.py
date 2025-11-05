@@ -16,3 +16,5 @@ class Cancha(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    timeslots = db.relationship('Timeslot', backref='cancha', lazy=True, cascade='all, delete-orphan')
+

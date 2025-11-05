@@ -11,15 +11,12 @@ class CanchaRepository:
     def create(cancha_data):
         cancha = Cancha(**cancha_data)
         db.session.add(cancha)
-        db.session.commit()
         return cancha
 
     def update(cancha, cancha_data):
         for key, value in cancha_data.items():
             setattr(cancha, key, value)
-        db.session.commit()
         return cancha
 
     def delete(cancha):
         db.session.delete(cancha)
-        db.session.commit()
