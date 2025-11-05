@@ -1,11 +1,12 @@
 from app.repositories.club_repo import ClubRepository
 from app.models.club import Club
-from app.services.direccion_service import DireccionService
+from app.repositories.direccion_repo import DireccionRepository
+from app.models.direccion import Direccion
 
 class ClubService:
     def __init__(self, db):
         self.club_repo = ClubRepository()
-        self.direccion_service = DireccionService(db)
+        self.direccion_repo = DireccionRepository(db)
 
     def get_all(self):
         return self.club_repo.get_all()
@@ -14,7 +15,6 @@ class ClubService:
         return self.club_repo.get_by_id(id)
 
     def create(self, data):
-    
         required_fields = ['nombre', 'cuit', 'telefono', 'direccion']
         for field in required_fields:
             if field not in data:
@@ -22,12 +22,13 @@ class ClubService:
 
         # Validar campos requeridos de dirección
         required_direccion_fields = ['calle', 'numero', 'ciudad', 'provincia']
+        direccion_data = data['direccion']
         for field in required_direccion_fields:
-            if field not in data['direccion'] or not data['direccion'][field]:
+            if field not in direccion_data or not direccion_data[field]:
                 raise ValueError(f"El campo 'direccion.{field}' es requerido")
 
         # Buscar o crear la dirección
-        direccion = self.direccion_service.find_or_create_direccion(data['direccion'])
+        direccion = self.direccion_repo.find_or_create_direccion(direccion_data)
 
         # Crear el club
         nuevo_club = Club(
@@ -44,26 +45,16 @@ class ClubService:
         club = self.get_by_id(club_id)
         if not club:
             raise ValueError("Club no encontrado")
-    
-        # Actualizar campos directos
-        if 'nombre' in data:
-            club.nombre = data['nombre']
-        if 'cuit' in data:
-            club.cuit = data['cuit']
-        if 'telefono' in data:
-            club.telefono = data['telefono']
         
         # Manejar la actualización de dirección si se proporciona
         if 'direccion' in data:
-            # Validar campos requeridos de dirección
-            required_direccion_fields = ['calle', 'numero', 'ciudad', 'provincia']
-            for field in required_direccion_fields:
-                if field not in data['direccion'] or not data['direccion'][field]:
-                    raise ValueError(f"El campo 'direccion.{field}' es requerido")
-            
-            # Buscar o crear la nueva dirección
-            direccion = self.direccion_service.find_or_create_direccion(data['direccion'])
+            direccion_data = data.pop('direccion')
+            direccion = self.direccion_repo.find_or_create_direccion(direccion_data)
             club.direccion_id = direccion.id
+
+        for key, value in data.items():
+            if hasattr(club, key):
+                setattr(club, key, value)
         
         return self.club_repo.update(club)
 

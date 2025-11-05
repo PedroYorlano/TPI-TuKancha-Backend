@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
 from app import db
 from app.services.club_service import ClubService
+from app.schemas.club_schema import club_schema, clubes_schema
 
-bp = Blueprint("club", __name__, url_prefix="/api/v1/club")
+bp = Blueprint("club", __name__, url_prefix="/api/v1/clubes")
 
 club_service = ClubService(db)
 
@@ -10,7 +11,7 @@ club_service = ClubService(db)
 @bp.get('/')
 def listar_clubes():
     clubes = club_service.get_all()
-    return jsonify([{"id": c.id, "nombre": c.nombre} for c in clubes])
+    return jsonify(clubes_schema.dump(clubes))
     
 # Obtener un club por su ID
 @bp.get('/<int:id>')
@@ -19,7 +20,7 @@ def obtener_club(id):
         club = club_service.get_by_id(id)
         if club is None:
             return jsonify({"error": "Club no encontrado"}), 404
-        return jsonify({"id": club.id, "nombre": club.nombre})
+        return jsonify(club_schema.dump(club))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -29,13 +30,7 @@ def crear_club():
     data = request.get_json()
     try:
         club = club_service.create(data)
-        return jsonify({
-            "id": club.id,
-            "nombre": club.nombre,
-            "cuit": club.cuit,
-            "telefono": club.telefono,
-            "direccion_id": club.direccion_id
-        }), 201
+        return jsonify(club_schema.dump(club)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
@@ -47,14 +42,7 @@ def actualizar_club(id):
     data = request.get_json()
     try:
         club = club_service.update(id, data)
-        return jsonify({
-            "id": club.id,
-            "nombre": club.nombre,
-            "cuit": club.cuit,
-            "telefono": club.telefono,
-            "direccion_id": club.direccion_id,
-            "message": "Club actualizado correctamente"
-        }), 200
+        return jsonify(club_schema.dump(club)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
@@ -64,10 +52,9 @@ def actualizar_club(id):
 @bp.delete('/<int:id>')
 def eliminar_club(id):
     try:
-        club = club_service.get_by_id(id)
-        if club is None:
-            return jsonify({"error": "Club no encontrado"}), 404
         club_service.delete(id)
-        return jsonify({"message": "Club eliminado"}), 200
+        return '', 204 
+    except ValueError as e:
+        return jsonify({"error": "Club no encontrado"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
