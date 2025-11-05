@@ -8,7 +8,7 @@ class ClubService:
     def __init__(self, db):
         self.db = db
         self.club_repo = ClubRepository()
-        self.direccion_repo = DireccionRepository(db)
+        self.direccion_repo = DireccionRepository()
 
     def get_all(self):
         return self.club_repo.get_all()

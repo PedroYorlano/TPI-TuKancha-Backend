@@ -27,7 +27,12 @@ def create_app():
     ma.init_app(app)
 
     # Register blueprints
-    from app.api.club import bp as club_bp
-    app.register_blueprint(club_bp, url_prefix='/api/v1/clubes')
+    from app.api.club import bp_club
+    app.register_blueprint(bp_club, url_prefix='/api/v1/clubes')
+    from app.api.cancha import bp_cancha
+    app.register_blueprint(bp_cancha, url_prefix='/api/v1/canchas')
+    from app.api.reserva import bp_reserva
+    app.register_blueprint(bp_reserva, url_prefix='/api/v1/reservas')
+    
 
     return app
