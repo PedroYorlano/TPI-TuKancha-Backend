@@ -7,16 +7,19 @@ from app.schemas.timeslot_schema import timeslots_schema
 bp_cancha = Blueprint("cancha", __name__, url_prefix="/api/v1/canchas")
 cancha_service = CanchaService(db)
 
+# Obtener todas las canchas
 @bp_cancha.get("/")
 def get_canchas():
     canchas = cancha_service.get_all()
     return jsonify(canchas_schema.dump(canchas))
 
+# Obtener cancha por id
 @bp_cancha.get("/<int:id_cancha>")
 def get_cancha_detalle(id_cancha):
     cancha = cancha_service.get_by_id(id_cancha)
     return jsonify(cancha_schema.dump(cancha))
 
+# Crear una nueva cancha
 @bp_cancha.post("/")
 def create_cancha():
     data = request.get_json()
@@ -28,6 +31,7 @@ def create_cancha():
     except Exception as e:
         return jsonify({"error": "Error al crear la cancha"}), 500
 
+# Actualizar una cancha
 @bp_cancha.put("/<int:id_cancha>")
 def update_cancha(id_cancha):
     data = request.get_json()
@@ -39,6 +43,7 @@ def update_cancha(id_cancha):
     except Exception as e:
         return jsonify({"error": "Error al actualizar la cancha"}), 500
 
+# Eliminar una cancha
 @bp_cancha.delete("/<int:id_cancha>")
 def delete_cancha(id_cancha):
     try:
@@ -52,6 +57,7 @@ def delete_cancha(id_cancha):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Obtener los timeslots de una cancha
 @bp_cancha.get("/<int:id_cancha>/timeslots")
 def get_timeslots_cancha(id_cancha):
     try:

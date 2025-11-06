@@ -5,6 +5,9 @@ class CanchaService:
         self.db = db
         self.cancha_repo = CanchaRepository()
 
+    def get_all(self):
+        return self.cancha_repo.get_all()
+
     def get_by_predio(self, predio_id):
         return self.cancha_repo.get_by_predio(predio_id)
 

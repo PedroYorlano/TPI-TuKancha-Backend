@@ -7,16 +7,13 @@ from .api.club import bp_club
 from .api.cancha import bp_cancha
 from .api.reserva import bp_reserva
 
-app = Flask(__name__)
 db = SQLAlchemy()
 ma = Marshmallow()
-
-app.config.from_object("config.Config")
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
-
+    
     db.init_app(app)
     ma.init_app(app)
 
