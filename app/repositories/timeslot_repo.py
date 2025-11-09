@@ -20,9 +20,4 @@ class TimeslotRepository:
         if not timeslots:
             return
         
-        try:
-            self.db.session.add_all(timeslots)
-            self.db.session.commit()
-        except Exception as e:
-            self.db.session.rollback()
-            raise ValueError(f"Error al guardar los timeslots en lote: {e}")
+        self.db.session.add_all(timeslots)

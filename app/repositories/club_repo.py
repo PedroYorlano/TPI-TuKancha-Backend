@@ -12,6 +12,7 @@ class ClubRepository:
         return Club.query.get(id)
     
     def create(self, club):
+        club = Club(**club)
         db.session.add(club)
         return club
     

@@ -66,6 +66,7 @@ class TimeslotService:
             raise ValueError("No se generaron nuevos timeslots (probablemente ya existían).")
 
         self.timeslot_repo.guardar_bulk(nuevos_timeslots_totales)
+        db.session.commit()
         return {"mensaje": f"Se generaron y guardaron {len(nuevos_timeslots_totales)} nuevos timeslots."}
 
     def _calcular_timeslots_para_dia(self, cancha, dia, definicion, apertura, cierre) -> list:

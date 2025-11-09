@@ -6,7 +6,7 @@ class User(db.Model):
     __tablename__ = "user"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    club_id = db.Column(db.Integer, db.ForeignKey("club.id"), nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey("club.id"), nullable=True)
     rol_id = db.Column(db.Integer, db.ForeignKey("rol.id"), nullable=False)
     nombre = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)

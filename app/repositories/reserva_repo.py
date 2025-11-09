@@ -6,7 +6,7 @@ class ReservaRepository:
         pass
     
     def get_by_id(self, id):
-        return Reserva.query.get(id)
+        return db.session.get(Reserva, id)
     
     def get_all(self):
         return Reserva.query.all()
@@ -15,8 +15,9 @@ class ReservaRepository:
         db.session.add(reserva)
         return reserva
     
-    def update(self, reserva):
-        db.session.add(reserva)
+    def update(self, reserva, data):
+        for key, value in data.items():
+            setattr(reserva, key, value)
         return reserva
     
     def delete(self, reserva):

@@ -11,13 +11,12 @@ class CanchaRepository:
     def get_by_id(self, cancha_id):
         return Cancha.query.get(cancha_id)
 
-    def create(self, cancha_data):
-        cancha = Cancha(**cancha_data)
+    def create(self, cancha):
         db.session.add(cancha)
         return cancha
 
-    def update(self, cancha, cancha_data):
-        for key, value in cancha_data.items():
+    def update(self, cancha, data):
+        for key, value in data.items():
             setattr(cancha, key, value)
         return cancha
 
