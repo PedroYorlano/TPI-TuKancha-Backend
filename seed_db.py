@@ -11,7 +11,6 @@ from app.models.servicio import Servicio
 from werkzeug.security import generate_password_hash
 
 # --- CONFIGURACIÓN ---
-# Datos del admin que se creará si no existe
 ADMIN_EMAIL = "admin@tukancha.com"
 ADMIN_PASS = "admin123"
 
@@ -35,21 +34,22 @@ def seed_data():
             rol_encargado = Rol(nombre="Encargado")
             rol_recepcionista = Rol(nombre="Recepcionista")
             db.session.add_all([rol_admin, rol_encargado, rol_recepcionista])
-            db.session.flush() # Hacemos flush para obtener los IDs
+            db.session.flush() 
         
         # 2. Crear Usuario Admin
         if User.query.filter_by(email=ADMIN_EMAIL).first():
             print(f"Usuario {ADMIN_EMAIL} ya existe. Omitiendo.")
         else:
             print(f"Creando usuario {ADMIN_EMAIL}...")
-            if not rol_admin: # Por si existía pero no lo teníamos
+            if not rol_admin: 
                 rol_admin = Rol.query.filter_by(nombre="Admin").first()
                 
             admin_user = User(
+                nombre="Admin General", 
                 email=ADMIN_EMAIL,
-                nombre="Chiqui Tapia",
                 hash_password=generate_password_hash(ADMIN_PASS),
                 rol_id=rol_admin.id,
+                club_id=None, 
                 activo=True 
             )
             db.session.add(admin_user)
@@ -58,6 +58,7 @@ def seed_data():
         club_prueba = Club.query.filter_by(nombre="Club Atlético TuKancha").first()
         if club_prueba:
             print("Club de prueba ya existe. Omitiendo.")
+            club_prueba = Club.query.filter_by(nombre="Club Atlético TuKancha").first()
         else:
             print("Creando Club de prueba...")
             dir_prueba = Direccion(
@@ -65,46 +66,47 @@ def seed_data():
                 numero="742",
                 ciudad="Springfield",
                 provincia="Springfield",
-                pais="USA" 
+                pais="Argentina" 
             )
             
             club_prueba = Club(
                 nombre="Club Atlético TuKancha",
-                cuit="30-12345678-9",
-                telefono="351-000111",
-                direccion=dir_prueba # Asignamos el objeto directamente
+                cuit="30-12345678-9",   
+                telefono="351-000111", 
+                direccion=dir_prueba 
             )
             db.session.add(club_prueba)
-            db.session.flush() # Hacemos flush para obtener el ID del club
+            db.session.flush() 
         
         # 4. Crear Canchas para el Club
         cancha_f5 = Cancha.query.filter_by(nombre="Cancha F5 (Techada)").first()
         if cancha_f5:
             print("Canchas de prueba ya existen. Omitiendo.")
+            cancha_f5 = Cancha.query.filter_by(nombre="Cancha F5 (Techada)").first()
         else:
             print("Creando Canchas de prueba...")
             cancha_f5 = Cancha(
                 nombre="Cancha F5 (Techada)",
                 deporte="Fútbol 5",
-                superficie=100.0,
+                superficie=5.0,
                 techado=True,
                 iluminacion=True,
                 precio_hora=100.00,
-                club_id=club_prueba.id,
-                activa=True
+                activa=True,
+                club_id=club_prueba.id
             )
             cancha_f7 = Cancha(
                 nombre="Cancha F7 (Aire Libre)",
                 deporte="Fútbol 7",
-                superficie=150.0,
+                superficie=7.0, 
                 techado=False,
                 iluminacion=True,
                 precio_hora=150.00,
-                club_id=club_prueba.id,
-                activa=True
+                activa=True,
+                club_id=club_prueba.id
             )
             db.session.add_all([cancha_f5, cancha_f7])
-            db.session.flush() # Hacemos flush para obtener IDs de canchas
+            db.session.flush() 
 
         # 5. Crear Timeslots de prueba para la Cancha F5 para hoy
         if Timeslot.query.first():
@@ -112,10 +114,8 @@ def seed_data():
         else:
             print(f"Creando Timeslots de prueba para hoy en '{cancha_f5.nombre}'...")
             hoy = datetime.now().date()
-            # Hora de inicio: hoy a las 18:00
             hora_inicio = datetime(hoy.year, hoy.month, hoy.day, 18, 0, 0)
             
-            # Crear 5 turnos de 1 hora (18, 19, 20, 21, 22)
             for i in range(5):
                 inicio_turno = hora_inicio + timedelta(hours=i)
                 fin_turno = inicio_turno + timedelta(hours=1)
@@ -129,15 +129,15 @@ def seed_data():
                 )
                 db.session.add(ts)
 
-        # 6. Crear Servicios Adicionales
+        """ # 6. Crear Servicios Adicionales
         if Servicio.query.first():
             print("Servicios ya existen. Omitiendo.")
         else:
             print("Creando Servicios...")
-            s_parrilla = Servicio(nombre="Parrilla", descripcion="Uso de asador post-partido")
-            s_bebidas = Servicio(nombre="Bebidas", descripcion="Pack de aguas y gatorade")
-            s_utileria = Servicio(nombre="Utilería", descripcion="Pelota y pecheras")
-            db.session.add_all([s_parrilla, s_bebidas, s_utileria])
+            s_parrilla = Servicio(nombre="Parrilla")
+            s_bebidas = Servicio(nombre="Bebidas")
+            s_utileria = Servicio(nombre="Utilería")
+            db.session.add_all([s_parrilla, s_bebidas, s_utileria]) """
 
         # --- Commit Final ---
         db.session.commit()
@@ -154,6 +154,5 @@ def seed_data():
 
 if __name__ == "__main__":
     app = create_app()
-    # Abrimos el contexto de la aplicación para poder usar 'db'
     with app.app_context():
         seed_data()
