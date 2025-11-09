@@ -15,11 +15,15 @@ class UserRepository:
         return User.query.filter_by(email=email).first()
     
     def create(self, user):
-        user = User(**user)
+        db.session.add(user)
         return user
     
-    def update(self, user):
-        return user
+    def update(self, user, data):
+        for key, value in data.items():
+            if hasattr(user, key) and key != 'id':
+                setattr(user, key, value)
+        db.session.add(user)
+        return user 
     
     def delete(self, user):
         db.session.delete(user)

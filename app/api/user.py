@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from app import db
+from app.services.rol_service import RolService
 from app.services.user_service import UserService
 from app.schemas.user_schema import user_schema, users_schema, user_create_schema
 
@@ -27,8 +28,7 @@ def obtener_usuario(id):
 @bp_user.post('/')
 def crear_usuario():
     data = request.get_json()
-    
-    # Se valida la ENTRADA con 'user_create_schema'
+    print("Received data:", data)
     errors = user_create_schema.validate(data)
     if errors:
         return jsonify(errors), 400
@@ -48,7 +48,6 @@ def crear_usuario():
 @bp_user.put('/<int:id>')
 def actualizar_usuario(id):
     data = request.get_json()
-
     errors = user_create_schema.validate(data)
     if errors:
         return jsonify(errors), 400

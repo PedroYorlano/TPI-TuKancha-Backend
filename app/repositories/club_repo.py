@@ -12,7 +12,12 @@ class ClubRepository:
         return Club.query.get(id)
     
     def create(self, club):
-        club = Club(**club)
+        db.session.add(club)
+        return club
+
+    def update(self, club, data):
+        for key, value in data.items():
+            setattr(club, key, value)
         db.session.add(club)
         return club
     

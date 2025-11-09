@@ -18,6 +18,7 @@ class ReservaRepository:
     def update(self, reserva, data):
         for key, value in data.items():
             setattr(reserva, key, value)
+        db.session.add(reserva)
         return reserva
     
     def delete(self, reserva):

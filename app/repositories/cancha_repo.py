@@ -18,6 +18,7 @@ class CanchaRepository:
     def update(self, cancha, data):
         for key, value in data.items():
             setattr(cancha, key, value)
+        db.session.add(cancha)
         return cancha
 
     def delete(self, cancha):

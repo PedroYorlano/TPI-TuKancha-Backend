@@ -17,7 +17,7 @@ class UserService:
         return self.user_repo.get_by_id(id)
     
     def create(self, data):
-        required_fields = ['email', 'rol_id']
+        required_fields = ['email', 'rol_id', 'nombre', 'password', 'club_id']
 
         for field in required_fields:
             if field not in data:
@@ -37,9 +37,11 @@ class UserService:
         
         try:
             nuevo_usuario = User(
+                nombre=data['nombre'],
                 email=data['email'],
                 hash_password=hash_pass,
-                rol_id=data['rol_id']
+                rol_id=data['rol_id'],
+                club_id=data['club_id']
             )
             self.user_repo.create(nuevo_usuario)
             self.db.session.commit()
@@ -50,7 +52,7 @@ class UserService:
         
     
     def update(self, user_id, data):
-        required_fields = ['email', 'rol_id']
+        required_fields = ['email', 'rol_id', 'nombre', 'password', 'club_id']
         for field in required_fields:
             if field not in data:
                 raise ValueError(f"El campo '{field}' es requerido")

@@ -12,13 +12,13 @@ class RolRepository:
         return Rol.query.filter_by(name=name).first()
     
     def create(self, rol):
-        rol = Rol(**rol)
         db.session.add(rol)
         return rol
     
     def update(self, rol):
         for key, value in rol.items():
             setattr(rol, key, value)
+        db.session.add(rol)
         return rol
     
     def delete(self, rol):
