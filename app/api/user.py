@@ -45,10 +45,10 @@ def crear_usuario():
     except Exception as e:
         return jsonify({"error": "Error al crear el usuario"}), 500
 
-@bp_user.put('/<int:id>')
+@bp_user.patch('/<int:id>')
 def actualizar_usuario(id):
     data = request.get_json()
-    errors = user_create_schema.validate(data)
+    errors = user_create_schema.validate(data, partial=True)
     if errors:
         return jsonify(errors), 400
 

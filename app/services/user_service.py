@@ -52,21 +52,23 @@ class UserService:
         
     
     def update(self, user_id, data):
-        required_fields = ['email', 'rol_id', 'nombre', 'password', 'club_id']
-        for field in required_fields:
-            if field not in data:
-                raise ValueError(f"El campo '{field}' es requerido")
+        if not data:
+            raise ValueError("No se proporcionaron datos para actualizar")
         
         try:
             usuario = self.user_repo.get_by_id(user_id)
             if not usuario:
                 raise ValueError("Usuario no encontrado")
+
+            if 'password' in data:
+                password_plano = data.pop('password')
+                usuario.hash_password = generate_password_hash(password_plano)
             
             for key, value in data.items():
                 if hasattr(usuario, key):
                     setattr(usuario, key, value)
             
-            self.user_repo.update(usuario)
+            self.user_repo.update(usuario, data)
             self.db.session.commit()
             return usuario
         except Exception as e:
