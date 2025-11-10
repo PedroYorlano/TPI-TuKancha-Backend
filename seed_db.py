@@ -27,32 +27,19 @@ def seed_data():
     try:
         if Rol.query.first():
             print("Roles ya existen. Omitiendo.")
-            rol_admin = Rol.query.filter_by(nombre="Admin").first()
+            rol_admin = Rol.query.filter_by(nombre="admin").first()
         else:
             print("Creando Roles...")
-            rol_admin = Rol(nombre="Admin")
-            rol_encargado = Rol(nombre="Encargado")
-            rol_recepcionista = Rol(nombre="Recepcionista")
+            rol_admin = Rol(nombre="admin")
+            rol_encargado = Rol(nombre="encargado")
+            rol_recepcionista = Rol(nombre="recepcionista")
             db.session.add_all([rol_admin, rol_encargado, rol_recepcionista])
             db.session.flush() 
+            print("✅ Roles creados: admin, encargado, recepcionista")
         
-        # 2. Crear Usuario Admin
-        if User.query.filter_by(email=ADMIN_EMAIL).first():
-            print(f"Usuario {ADMIN_EMAIL} ya existe. Omitiendo.")
-        else:
-            print(f"Creando usuario {ADMIN_EMAIL}...")
-            if not rol_admin: 
-                rol_admin = Rol.query.filter_by(nombre="Admin").first()
-                
-            admin_user = User(
-                nombre="Admin General", 
-                email=ADMIN_EMAIL,
-                hash_password=generate_password_hash(ADMIN_PASS),
-                rol_id=rol_admin.id,
-                club_id=None, 
-                activo=True 
-            )
-            db.session.add(admin_user)
+        # 2. Crear Usuario Admin (OMITIDO - los usuarios se crean con sus clubes)
+        # No creamos usuario admin sin club porque club_id es NOT NULL
+        print("NOTA: Los usuarios admin se crearán automáticamente al crear clubes.")
 
         # 3. Crear Club de Prueba y Dirección
         club_prueba = Club.query.filter_by(nombre="Club Atlético TuKancha").first()
