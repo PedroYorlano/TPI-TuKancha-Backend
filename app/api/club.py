@@ -35,7 +35,19 @@ def crear_club():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        return jsonify({"error": "Error al crear el club"}), 500
+        import traceback
+        print("=" * 50)
+        print("ERROR AL CREAR CLUB:")
+        print(f"Tipo de error: {type(e).__name__}")
+        print(f"Mensaje: {str(e)}")
+        print("Traceback completo:")
+        traceback.print_exc()
+        print("=" * 50)
+        return jsonify({
+            "error": "Error al crear el club",
+            "details": str(e),
+            "type": type(e).__name__
+        }), 500
 
 # Actualizar un club por su ID
 @bp_club.put('/<int:id>')

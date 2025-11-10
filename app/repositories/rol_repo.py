@@ -9,7 +9,7 @@ class RolRepository:
         return db.session.get(Rol, id)
 
     def get_by_name(self, name):
-        return Rol.query.filter_by(name=name).first()
+        return Rol.query.filter_by(nombre=name).first()
     
     def create(self, rol):
         db.session.add(rol)
