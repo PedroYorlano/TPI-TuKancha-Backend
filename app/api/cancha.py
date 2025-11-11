@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from app import db
+from app.auth.decorators import role_required
 from app.services.cancha_service import CanchaService
 from app.schemas.cancha_schema import cancha_schema, canchas_schema
 from app.schemas.timeslot_schema import timeslots_schema
@@ -21,6 +23,8 @@ def get_cancha_detalle(id_cancha):
 
 # Crear una nueva cancha
 @bp_cancha.post("/")
+@jwt_required()
+@role_required(['admin'])
 def create_cancha():
     data = request.get_json()
     try:

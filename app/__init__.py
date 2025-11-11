@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
+from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
 
@@ -11,6 +12,7 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 ma = Marshmallow()
+jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
@@ -22,6 +24,7 @@ def create_app():
     
     db.init_app(app)
     migrate.init_app(app, db)
+    jwt.init_app(app)
     
     # Configuración de CORS más permisiva para desarrollo
     CORS(app, resources={
@@ -35,6 +38,10 @@ def create_app():
     
     ma.init_app(app)
 
+    # Registrar blueprints
+    from app.api.auth import bp_auth
+    app.register_blueprint(bp_auth)
+    
     from app.api.club import bp_club
     app.register_blueprint(bp_club, url_prefix='/api/v1/clubes')
     from app.api.cancha import bp_cancha
