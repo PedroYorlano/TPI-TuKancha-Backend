@@ -1,17 +1,17 @@
 from app.repositories.timeslot_repo import TimeslotRepository
-from app.models.timeslot import Timeslot
+from app.models.timeslot import Timeslot, TimeslotEstado
 from app import db
 from app.repositories.club_repo import ClubRepository
 from app.repositories.timeslot_definicion_repo import TimeslotDefinicionRepository
-from datetime import datetime, timedelta
-from app.models.timeslot import Timeslot
+from datetime import datetime, timedelta, date, time
+from collections import defaultdict
 
 class TimeslotService:
     def __init__(self, db):
         self.db = db
         self.timeslot_repo = TimeslotRepository(db)
-        self.club_repo = ClubRepository(db)
-        self.definicion_repo = TimeslotDefinicionRepository(db)
+        self.club_repo = ClubRepository()
+        self.definicion_repo = TimeslotDefinicionRepository()
 
     def get_all(self):
         """Retorna todos los timeslots."""
@@ -20,6 +20,75 @@ class TimeslotService:
     def get_by_id(self, id):
         """Retorna un timeslot por su ID."""
         return self.timeslot_repo.get_by_id(id)
+    
+    def get_disponibilidad_por_club_y_fecha(self, club_id: int, fecha: date):
+        """
+        Obtiene la disponibilidad de canchas agrupada por horario para un club y fecha.
+        
+        Returns:
+            dict: {
+                "club_id": int,
+                "fecha": str,
+                "horarios": [
+                    {
+                        "hora": "HH:MM",
+                        "canchas_disponibles": [...]
+                    }
+                ]
+            }
+        """
+        # Verificar que el club existe
+        club = self.club_repo.get_by_id(club_id)
+        if not club:
+            raise ValueError("Club no encontrado")
+        
+        # Obtener todos los timeslots del club para esa fecha
+        timeslots = self.timeslot_repo.get_by_club_and_fecha(club_id, fecha)
+        
+        if not timeslots:
+            raise ValueError("No hay timeslots disponibles para esta fecha. Puede que necesites generarlos primero.")
+        
+        # Agrupar timeslots por hora de inicio
+        timeslots_por_hora = defaultdict(list)
+        for ts in timeslots:
+            hora_str = ts.inicio.strftime('%H:%M')
+            timeslots_por_hora[hora_str].append(ts)
+        
+        # Construir respuesta
+        horarios = []
+        for hora in sorted(timeslots_por_hora.keys()):
+            canchas_disponibles = []
+            
+            for ts in timeslots_por_hora[hora]:
+                # Solo incluir canchas con timeslot disponible
+                if ts.estado == TimeslotEstado.DISPONIBLE:
+                    cancha_info = {
+                        "timeslot_id": ts.id,
+                        "cancha_id": ts.cancha.id,
+                        "nombre": ts.cancha.nombre,
+                        "deporte": ts.cancha.deporte,
+                        "techado": ts.cancha.techado,
+                        "iluminacion": ts.cancha.iluminacion,
+                        "superficie": float(ts.cancha.superficie),
+                        "precio": float(ts.precio) if ts.precio else float(ts.cancha.precio_hora),
+                        "hora_inicio": ts.inicio.strftime('%H:%M'),
+                        "hora_fin": ts.fin.strftime('%H:%M')
+                    }
+                    canchas_disponibles.append(cancha_info)
+            
+            # Incluir el horario incluso si no hay canchas disponibles
+            horarios.append({
+                "hora": hora,
+                "canchas_disponibles": canchas_disponibles,
+                "total_disponibles": len(canchas_disponibles)
+            })
+        
+        return {
+            "club_id": club_id,
+            "fecha": fecha.isoformat(),
+            "total_horarios": len(horarios),
+            "horarios": horarios
+        }
 
     def generar_timeslots_para_club(self, club_id: int, fecha_desde: date, fecha_hasta: date, horario_apertura: time, horario_cierre: time):
         """

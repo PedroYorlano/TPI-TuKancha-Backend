@@ -1,6 +1,6 @@
 from app.models.timeslot import Timeslot 
 from app import db
-from datetime import date
+from datetime import date, datetime
 
 class TimeslotRepository: 
     def __init__(self, db): 
@@ -14,6 +14,22 @@ class TimeslotRepository:
                 db.func.date(Timeslot.inicio) == fecha 
             ).exists() 
         ).scalar()
+    
+    def get_by_club_and_fecha(self, club_id: int, fecha: date):
+        """
+        Obtiene todos los timeslots de un club para una fecha específica.
+        Incluye la relación con cancha para acceder a sus datos.
+        """
+        return (
+            self.db.session.query(Timeslot)
+            .join(Timeslot.cancha)
+            .filter(
+                Timeslot.cancha.has(club_id=club_id),
+                db.func.date(Timeslot.inicio) == fecha
+            )
+            .order_by(Timeslot.inicio)
+            .all()
+        )
 
     def guardar_bulk(self, timeslots: list):
         """Guarda una lista de timeslots en la base de datos."""

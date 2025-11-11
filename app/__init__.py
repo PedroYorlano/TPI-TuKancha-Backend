@@ -52,4 +52,7 @@ def create_app():
     from app.api.user import bp_user
     app.register_blueprint(bp_user)
     
+    from app.api.timeslot import bp_timeslot
+    app.register_blueprint(bp_timeslot)
+    
     return app
