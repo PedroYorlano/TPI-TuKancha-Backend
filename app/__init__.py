@@ -26,29 +26,30 @@ def create_app():
     migrate.init_app(app, db)
     jwt.init_app(app)
     
-    # Configuración de CORS más permisiva para desarrollo
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
-            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True
-        }
-    })
+    # ✅ Configuración de CORS simplificada y más permisiva
+    CORS(app, 
+         origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    )
     
     ma.init_app(app)
 
-    # Registrar blueprints
+    # ✅ Registrar blueprints SIN duplicar url_prefix
     from app.api.auth import bp_auth
     app.register_blueprint(bp_auth)
     
     from app.api.club import bp_club
-    app.register_blueprint(bp_club, url_prefix='/api/v1/clubes')
+    app.register_blueprint(bp_club)
+    
     from app.api.cancha import bp_cancha
-    app.register_blueprint(bp_cancha, url_prefix='/api/v1/canchas')
+    app.register_blueprint(bp_cancha)
+    
     from app.api.reserva import bp_reserva
-    app.register_blueprint(bp_reserva, url_prefix='/api/v1/reservas')
+    app.register_blueprint(bp_reserva)
+    
     from app.api.user import bp_user
-    app.register_blueprint(bp_user, url_prefix='/api/v1/users')
+    app.register_blueprint(bp_user)
     
     return app
