@@ -10,13 +10,11 @@ class Reserva(db.Model):
     cancha_id = db.Column(db.Integer, db.ForeignKey("cancha.id"), nullable=False)
     cliente_nombre = db.Column(db.String(120), nullable=False)
     cliente_telefono = db.Column(db.String(30))
-    cliente_email = db.Column(db.String(120))
+    cliente_email = db.Column(db.String(120), nullable=False)
     estado = db.Column(db.Enum(ReservaEstado, name="reserva_estado", native_enum=False), nullable=False, default=ReservaEstado.PENDIENTE)
     fuente = db.Column(db.Enum(FuenteReserva, name="fuente_reserva", native_enum=False), nullable=False)
-    observaciones = db.Column(db.String(255))
+    servicios = db.Column(db.String(255))  # Lista de servicios separados por coma
     precio_total = db.Column(db.Numeric(10, 2))
-    senia_monto = db.Column(db.Numeric(10, 2))
-    senia_pagada = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

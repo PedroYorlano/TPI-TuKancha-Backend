@@ -19,58 +19,66 @@ class ReservaService:
     def create(self, data):
         """
         Crea una reserva bloqueando uno o más timeslots.
-        'data' debe ser:
-        {
-            "timeslot_ids": [10, 11, 12],
-            "cliente_nombre": "Juan Perez",
-            "cliente_telefono": "351-123456"
-        }
+        
+        Campos requeridos:
+        - timeslot_ids: lista de IDs de timeslots a reservar
+        - cliente_nombre: nombre del cliente
+        - cliente_telefono: teléfono del cliente  
+        - cliente_email: email del cliente (OBLIGATORIO)
+        - fuente: origen de la reserva (WEB, TELEFONO, PRESENCIAL, WHATSAPP)
+        - servicios: lista de servicios adicionales separados por coma (opcional)
         """
+        # Validar campos requeridos
+        required_fields = ['timeslot_ids', 'cliente_nombre', 'cliente_email', 'fuente']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise ValueError(f"El campo '{field}' es requerido")
+        
         timeslot_ids = data.get('timeslot_ids')
-        if not timeslot_ids:
-            raise ValueError("Se requiere al menos un 'timeslot_id'")
+        if not isinstance(timeslot_ids, list) or len(timeslot_ids) == 0:
+            raise ValueError("'timeslot_ids' debe ser una lista con al menos un ID")
 
         try:
-            # bloquear timeslots
+            # Bloquear timeslots
             timeslots = Timeslot.query.filter(Timeslot.id.in_(timeslot_ids))\
                                      .with_for_update()\
                                      .all()
 
             if len(timeslots) != len(timeslot_ids):
-                raise ValueError("Uno o más timeslots no existen o ya fueron reservados.")
+                raise ValueError("Uno o más timeslots no existen.")
 
             precio_total = 0
             
-            # validar
+            # Validar disponibilidad
             for ts in timeslots:
                 if ts.estado != TimeslotEstado.DISPONIBLE:
                     raise ValueError(f"El timeslot {ts.id} (de {ts.inicio}) ya no está disponible.")
                 precio_total += ts.precio
 
-            # crear reserva
+            # Crear reserva
             nueva_reserva = Reserva(
+                cancha_id=timeslots[0].cancha_id,  # Todas deben ser de la misma cancha
                 cliente_nombre=data['cliente_nombre'],
                 cliente_telefono=data.get('cliente_telefono'),
-                precio_total=precio_total,
-                estado_pago='PENDIENTE'
+                cliente_email=data['cliente_email'],
+                fuente=data['fuente'],
+                servicios=data.get('servicios', ''),  # Lista separada por comas
+                precio_total=precio_total
             )
             self.db.session.add(nueva_reserva)
-            # Hacemos "flush" para que nueva_reserva.id tenga un valor
             self.db.session.flush()
 
-            # vincular y actualizar timeslots
+            # Vincular y actualizar timeslots
             for ts in timeslots:
-                # Cambiamos el estado del timeslot
                 ts.estado = TimeslotEstado.RESERVADO
                 
-                # Creamos el vínculo en la tabla pivot
                 link = ReservaTimeslot(
                     reserva_id=nueva_reserva.id,
                     timeslot_id=ts.id
                 )
                 self.db.session.add(link)
 
-            # confirmar transaccion
+            # Confirmar transacción
             self.db.session.commit()
             return nueva_reserva
 
@@ -115,12 +123,16 @@ class ReservaService:
             raise ValueError(f"Error al cancelar la reserva: {str(e)}")
 
     def marcar_reserva_pagada(self, reserva_id):
+        """
+        Marca una reserva como pagada (cambia el estado a PAGADO).
+        """
         try:
             reserva = self.reserva_repo.get_by_id(reserva_id)
             if not reserva:
                 raise ValueError("Reserva no encontrada")
             
-            reserva.estado_pago = 'PAGADO'
+            from app.models.enums import ReservaEstado
+            reserva.estado = ReservaEstado.PAGADO
             self.db.session.commit()
             return reserva
         except Exception as e:
