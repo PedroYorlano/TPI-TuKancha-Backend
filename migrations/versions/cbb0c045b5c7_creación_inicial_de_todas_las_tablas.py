@@ -63,17 +63,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['club_id'], ['club.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('timeslot_definicion',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('club_id', sa.Integer(), nullable=False),
-    sa.Column('duracion_minutos', sa.Integer(), nullable=False),
-    sa.Column('paso_minutos', sa.Integer(), nullable=False),
-    sa.Column('activo', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['club_id'], ['club.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('user',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('club_id', sa.Integer(), nullable=True),
@@ -143,7 +132,6 @@ def downgrade():
     op.drop_table('timeslot')
     op.drop_table('reserva')
     op.drop_table('user')
-    op.drop_table('timeslot_definicion')
     op.drop_table('cancha')
     op.drop_table('club')
     op.drop_table('rol')

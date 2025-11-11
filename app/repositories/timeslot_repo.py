@@ -15,6 +15,19 @@ class TimeslotRepository:
             ).exists() 
         ).scalar()
     
+    def existe_timeslot_exacto(self, cancha_id: int, inicio: datetime, fin: datetime) -> bool:
+        """
+        Verifica si ya existe un timeslot con exactamente el mismo horario.
+        Esto previene duplicados exactos que serían un error grave.
+        """
+        return self.db.session.query(
+            self.db.session.query(Timeslot).filter(
+                Timeslot.cancha_id == cancha_id,
+                Timeslot.inicio == inicio,
+                Timeslot.fin == fin
+            ).exists()
+        ).scalar()
+    
     def get_by_club_and_fecha(self, club_id: int, fecha: date):
         """
         Obtiene todos los timeslots de un club para una fecha específica.

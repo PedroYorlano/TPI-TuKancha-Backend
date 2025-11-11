@@ -2,16 +2,18 @@ from app.repositories.timeslot_repo import TimeslotRepository
 from app.models.timeslot import Timeslot, TimeslotEstado
 from app import db
 from app.repositories.club_repo import ClubRepository
-from app.repositories.timeslot_definicion_repo import TimeslotDefinicionRepository
 from datetime import datetime, timedelta, date, time
 from collections import defaultdict
+
+# Configuración fija de timeslots para MVP
+DURACION_TIMESLOT_MINUTOS = 60  # Turnos de 1 hora
+PASO_TIMESLOT_MINUTOS = 60      # Sin solapamiento
 
 class TimeslotService:
     def __init__(self, db):
         self.db = db
         self.timeslot_repo = TimeslotRepository(db)
         self.club_repo = ClubRepository()
-        self.definicion_repo = TimeslotDefinicionRepository()
 
     def get_all(self):
         """Retorna todos los timeslots."""
@@ -90,9 +92,48 @@ class TimeslotService:
             "horarios": horarios
         }
 
+    def generar_timeslots_para_cancha(self, cancha, fecha_desde: date, fecha_hasta: date, horario_apertura: time, horario_cierre: time, auto_commit: bool = True):
+        """
+        Genera timeslots para una cancha específica en un rango de fechas.
+        Usa configuración fija: turnos de 60 minutos sin solapamiento.
+        
+        Args:
+            cancha: Instancia de Cancha
+            fecha_desde: Fecha de inicio (inclusive)
+            fecha_hasta: Fecha de fin (inclusive)
+            horario_apertura: Hora de apertura diaria
+            horario_cierre: Hora de cierre diaria
+            auto_commit: Si debe hacer commit automático (False cuando se llama desde creación de cancha)
+            
+        Returns:
+            Dict con un mensaje y la cantidad de timeslots generados
+        """
+        if fecha_desde > fecha_hasta:
+            raise ValueError("La fecha desde debe ser anterior a la fecha hasta")
+        
+        dias_a_generar = [fecha_desde + timedelta(days=d) for d in range((fecha_hasta - fecha_desde).days + 1)]
+        nuevos_timeslots = []
+        
+        for dia in dias_a_generar:
+            # Verificar que no existan timeslots para esta cancha en esta fecha
+            if not self.timeslot_repo.existen_en_fecha(cancha.id, dia):
+                timeslots_dia = self._calcular_timeslots_para_dia(cancha, dia, horario_apertura, horario_cierre)
+                nuevos_timeslots.extend(timeslots_dia)
+        
+        if nuevos_timeslots:
+            self.timeslot_repo.guardar_bulk(nuevos_timeslots)
+            if auto_commit:
+                db.session.commit()
+        
+        return {
+            "mensaje": f"Se generaron {len(nuevos_timeslots)} timeslots para la cancha '{cancha.nombre}'",
+            "cantidad": len(nuevos_timeslots)
+        }
+
     def generar_timeslots_para_club(self, club_id: int, fecha_desde: date, fecha_hasta: date, horario_apertura: time, horario_cierre: time):
         """
         Genera timeslots para todas las canchas de un club en un rango de fechas.
+        Usa configuración fija: turnos de 60 minutos sin solapamiento.
         
         Args:
             club_id: ID del club
@@ -105,7 +146,7 @@ class TimeslotService:
             Dict con un mensaje y la cantidad de timeslots generados
             
         Raises:
-            ValueError: Si el club no existe, no tiene canchas o no tiene una definición activa
+            ValueError: Si el club no existe o no tiene canchas
         """
         if fecha_desde > fecha_hasta:
             raise ValueError("La fecha desde debe ser anterior a la fecha hasta")
@@ -113,10 +154,6 @@ class TimeslotService:
         club = self.club_repo.get_by_id(club_id)
         if not club:
             raise ValueError("Club no encontrado")
-
-        definicion = self.definicion_repo.get_activa_por_club(club_id)
-        if not definicion:
-            raise ValueError("No hay una definición de timeslot activa para este club.")
 
         canchas = club.canchas
         if not canchas:
@@ -128,7 +165,7 @@ class TimeslotService:
         for dia in dias_a_generar:
             for cancha in canchas:
                 if not self.timeslot_repo.existen_en_fecha(cancha.id, dia):
-                    nuevos = self._calcular_timeslots_para_dia(cancha, dia, definicion, horario_apertura, horario_cierre)
+                    nuevos = self._calcular_timeslots_para_dia(cancha, dia, horario_apertura, horario_cierre)
                     nuevos_timeslots_totales.extend(nuevos)
     
         if not nuevos_timeslots_totales:
@@ -138,39 +175,45 @@ class TimeslotService:
         db.session.commit()
         return {"mensaje": f"Se generaron y guardaron {len(nuevos_timeslots_totales)} nuevos timeslots."}
 
-    def _calcular_timeslots_para_dia(self, cancha, dia, definicion, apertura, cierre) -> list:
+    def _calcular_timeslots_para_dia(self, cancha, dia, apertura, cierre) -> list:
         """
         Calcula los timeslots para un día y cancha específicos.
+        Verifica duplicados exactos antes de crear cada timeslot.
+        Configuración fija: turnos de 60 minutos sin solapamiento.
         
         Args:
             cancha: Instancia de Cancha
             dia: Fecha para la que se generarán los timeslots
-            definicion: Instancia de TimeslotDefinicion con la configuración
             apertura: Hora de apertura
             cierre: Hora de cierre
             
         Returns:
-            Lista de objetos Timeslot generados
+            Lista de objetos Timeslot generados (sin duplicados)
         """
         timeslots_del_dia = []
         hora_actual = datetime.combine(dia, apertura)
         hora_fin_jornada = datetime.combine(dia, cierre)
     
-        duracion = timedelta(minutes=definicion.duracion_minutos)
-        paso = timedelta(minutes=definicion.paso_minutos)
+        duracion = timedelta(minutes=DURACION_TIMESLOT_MINUTOS)
+        paso = timedelta(minutes=PASO_TIMESLOT_MINUTOS)
 
         while hora_actual < hora_fin_jornada:
             hora_fin_timeslot = hora_actual + duracion
             if hora_fin_timeslot > hora_fin_jornada:
                 break
 
-            ts = Timeslot(
-                cancha_id=cancha.id,
-                inicio=hora_actual,
-                fin=hora_fin_timeslot,
-                precio=definicion.precio
-            )
-            timeslots_del_dia.append(ts)
+            # VALIDACIÓN CRÍTICA: Verificar que no exista un timeslot exacto
+            if not self.timeslot_repo.existe_timeslot_exacto(cancha.id, hora_actual, hora_fin_timeslot):
+                ts = Timeslot(
+                    cancha_id=cancha.id,
+                    inicio=hora_actual,
+                    fin=hora_fin_timeslot,
+                    precio=cancha.precio_hora  # Usar el precio de la cancha por defecto
+                )
+                timeslots_del_dia.append(ts)
+            else:
+                print(f"⚠️  DUPLICADO DETECTADO: Timeslot ya existe para cancha {cancha.id} en {hora_actual} - {hora_fin_timeslot}")
+            
             hora_actual += paso
         
         return timeslots_del_dia
