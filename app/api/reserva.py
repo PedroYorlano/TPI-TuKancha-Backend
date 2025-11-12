@@ -23,6 +23,21 @@ def get_by_id(id):
 @bp_reserva.post("/")
 def create():
     data = request.json
-    reserva = reserva_service.create(data)
-    return reserva_schema.dump(reserva)
+    try:
+        reserva = reserva_service.create(data)
+        return jsonify(reserva_schema.dump(reserva)), 201
+    except ValueError as e:
+        # Errores de validación (timeslot no disponible, campos faltantes, etc.)
+        print(f"Error de validación al crear reserva: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        # Errores inesperados
+        import traceback
+        print("=" * 50)
+        print("ERROR AL CREAR RESERVA:")
+        print(f"Tipo: {type(e).__name__}")
+        print(f"Mensaje: {str(e)}")
+        traceback.print_exc()
+        print("=" * 50)
+        return jsonify({"error": "Error al crear la reserva", "details": str(e)}), 500
 
