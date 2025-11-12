@@ -5,7 +5,9 @@ from datetime import datetime
 from app import db
 from app.auth.decorators import role_required
 from app.services.torneos.torneo_service import TorneoService
+from app.services.equipo_service import EquipoService
 from app.schemas.torneos.torneo_schema import torneo_schema, torneos_schema
+from app.schemas.torneos.equipo_schema import equipo_schema, equipos_schema
 from app.models.enums import TorneoEstado
 
 # Esquema para validar fechas en formato DD-MM-YYYY
