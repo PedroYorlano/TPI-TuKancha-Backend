@@ -87,6 +87,10 @@ def create_equipo():
 @role_required(["Admin"])
 @bp_equipo.put("/<int:equipo_id>")
 def update_equipo(equipo_id):
+    # validar que el torneo no este en curso
+    equipo = equipo_service.get_by_id(equipo_id)
+    if equipo.torneo.estado != "CREADO":
+        return handle_error("No se puede actualizar el equipo, el torneo ya esta en curso", 400)
     try:
         equipo_data = request.get_json()
         if not equipo_data:

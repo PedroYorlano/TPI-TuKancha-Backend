@@ -228,3 +228,17 @@ class TorneoService:
         except Exception as e:
             self.db.session.rollback()
             raise ValueError(f"Error al cambiar el estado del torneo: {str(e)}")
+
+    def mostrar_tabla_posiciones(self, torneo_id):
+        torneo = self.torneo_repo.get_by_id(torneo_id)
+        if not torneo:
+            raise ValueError("Torneo no encontrado")
+        
+        for equipo in torneo.equipos:
+            puntos = equipo.partidos_ganados * 3 + equipo.partidos_empatados * 1
+            print(f"Equipo: {equipo.nombre}")
+            print(f"Partidos ganados: {equipo.partidos_ganados}")
+            print(f"Partidos perdidos: {equipo.partidos_perdidos}")
+            print(f"Partidos empatados: {equipo.partidos_empatados}")
+            print(f"Puntos: {puntos}")
+            print("-------------------------")

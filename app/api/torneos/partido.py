@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app import db
-from app.services.partido_service import PartidoService
-from app.schemas.partido_schema import partido_schema, partidos_schema
+from app.services.torneos.partido_service import PartidoService
+from app.schemas.torneos.partido_schema import partido_schema, partidos_schema
 
 bp_partido = Blueprint("partido", __name__, url_prefix="/api/v1/partidos")
 
@@ -68,4 +68,16 @@ def listar_partidos_torneo(torneo_id):
 		return jsonify(partidos_schema.dump(partidos))
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
+
+# Registrar resultado de un partido
+@bp_partido.post('/<int:id>/resultado')
+def registrar_resultado(id):
+	data = request.get_json()
+	try:
+		partido = partido_service.update(id, data)
+		return jsonify(partido_schema.dump(partido)), 200
+	except ValueError as e:
+		return jsonify({"error": str(e)}), 404
+	except Exception as e:
+		return jsonify({"error": "Error al registrar el resultado del partido"}), 500
 
