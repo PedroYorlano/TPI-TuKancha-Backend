@@ -36,6 +36,18 @@ class CanchaService:
             list[Cancha]: Lista de canchas del predio
         """
         return self.cancha_repo.get_by_predio(predio_id)
+    
+    def get_by_club(self, club_id):
+        """
+        Obtiene las canchas de un club específico.
+        
+        Args:
+            club_id (int): ID del club
+            
+        Returns:
+            list[Cancha]: Lista de canchas del club
+        """
+        return self.cancha_repo.get_by_club(club_id)
 
     def get_by_id(self, cancha_id):
         """

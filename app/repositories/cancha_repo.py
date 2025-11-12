@@ -7,6 +7,9 @@ class CanchaRepository:
     
     def get_by_predio(self, predio_id):
         return Cancha.query.filter_by(predio_id=predio_id).all()
+    
+    def get_by_club(self, club_id):
+        return Cancha.query.filter_by(club_id=club_id).all()
 
     def get_by_id(self, cancha_id):
         return Cancha.query.get(cancha_id)

@@ -21,6 +21,16 @@ def get_cancha_detalle(id_cancha):
     cancha = cancha_service.get_by_id(id_cancha)
     return jsonify(cancha_schema.dump(cancha))
 
+# Obtener todas las canchas de un club específico
+@bp_cancha.get("/club/<int:club_id>")
+@jwt_required()
+def get_canchas_by_club(club_id):
+    try:
+        canchas = cancha_service.get_by_club(club_id)
+        return jsonify(canchas_schema.dump(canchas)), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # Crear una nueva cancha
 @bp_cancha.post("/")
 @jwt_required()
