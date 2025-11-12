@@ -1,9 +1,8 @@
-from app.models.torneo import Equipo
+from app.models.equipo import Equipo
 from app import ma
-from app.schemas.torneos.torneo_schema import TorneoSchema
 
 class EquipoSchema(ma.SQLAlchemyAutoSchema):
-    torneo = ma.Nested(TorneoSchema)
+    torneo = ma.Nested('TorneoSchema', exclude=('equipos',), many=False)
     
     class Meta:
         model = Equipo
@@ -22,3 +21,5 @@ class EquipoSchema(ma.SQLAlchemyAutoSchema):
     
 equipo_schema = EquipoSchema()
 equipos_schema = EquipoSchema(many=True)
+
+from app.schemas.torneos.torneo_schema import TorneoSchema

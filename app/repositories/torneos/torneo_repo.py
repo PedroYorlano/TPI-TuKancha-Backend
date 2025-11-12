@@ -49,7 +49,6 @@ class TorneoRepository:
         Returns:
             Torneo: El torneo creado
         """
-        torneo = Torneo(**torneo_data)
         db.session.add(torneo)
         return torneo
     

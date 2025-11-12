@@ -5,7 +5,7 @@ from datetime import datetime
 from app import db
 from app.auth.decorators import role_required
 from app.services.torneos.torneo_service import TorneoService
-from app.services.equipo_service import EquipoService
+from app.services.torneos.equipo_service import EquipoService
 from app.schemas.torneos.torneo_schema import torneo_schema, torneos_schema
 from app.schemas.torneos.equipo_schema import equipo_schema, equipos_schema
 from app.models.enums import TorneoEstado
@@ -95,7 +95,7 @@ def get_torneos_por_fecha():
 
 # Crear un nuevo torneo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_torneo.post("/")
 def create_torneo():
     try:
@@ -126,10 +126,6 @@ def create_torneo():
                     400
                 )
         
-        # Obtener el ID del usuario autenticado
-        current_user_id = get_jwt_identity()
-        torneo_data['creado_por'] = current_user_id
-        
         # Crear el torneo
         torneo = torneo_service.create(torneo_data)
         
@@ -149,7 +145,7 @@ def create_torneo():
 
 # Actualizar un torneo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_torneo.put("/<int:id_torneo>")
 def update_torneo(id_torneo):
     try:
@@ -200,7 +196,7 @@ def update_torneo(id_torneo):
 
 # Eliminar un torneo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_torneo.delete("/<int:id_torneo>")
 def delete_torneo(id_torneo):
     try:
@@ -223,7 +219,7 @@ def delete_torneo(id_torneo):
 
 # Cambiar estado de un torneo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_torneo.put("/<int:id_torneo>/estado")
 def cambiar_estado_torneo(id_torneo):
     try:
@@ -260,7 +256,7 @@ def cambiar_estado_torneo(id_torneo):
 
 # Agregar un equipo al torneo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_torneo.put("/<int:id_torneo>/equipo")
 def agregar_equipo_torneo(id_torneo):
     try:

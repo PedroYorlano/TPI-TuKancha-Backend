@@ -86,22 +86,10 @@ class TorneoService:
                 raise ValueError(f"El campo '{field}' es requerido")
         
         try:
-            # Validar fechas si se proporcionan
-            if 'fecha_inicio' in torneo_data and torneo_data['fecha_inicio']:
-                try:
-                    torneo_data['fecha_inicio'] = datetime.strptime(torneo_data['fecha_inicio'], '%d-%m-%Y').date()
-                except ValueError:
-                    raise ValueError("Formato de fecha_inicio inválido. Use DD-MM-YYYY")
-            
-            if 'fecha_fin' in torneo_data and torneo_data['fecha_fin']:
-                try:
-                    torneo_data['fecha_fin'] = datetime.strptime(torneo_data['fecha_fin'], '%d-%m-%Y').date()
-                except ValueError:
-                    raise ValueError("Formato de fecha_fin inválido. Use DD-MM-YYYY")
-            
-            # Validar que fecha_fin no sea anterior a fecha_inicio si ambas están presentes
-            if ('fecha_inicio' in torneo_data and torneo_data['fecha_inicio'] and 
-                'fecha_fin' in torneo_data and torneo_data['fecha_fin'] and 
+            # La validación de formato de fecha ya se hace en la API.
+            # Aquí solo validamos la lógica de negocio.
+            if ('fecha_inicio' in torneo_data and torneo_data.get('fecha_inicio') and 
+                'fecha_fin' in torneo_data and torneo_data.get('fecha_fin') and 
                 torneo_data['fecha_fin'] < torneo_data['fecha_inicio']):
                 raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio")
             
@@ -115,7 +103,16 @@ class TorneoService:
                 torneo_data['estado'] = TorneoEstado.CREADO
             
             # Crear el torneo
-            torneo = self.torneo_repo.create(torneo_data)
+            torneo = Torneo(
+                nombre=torneo_data['nombre'],
+                club_id=torneo_data['club_id'],
+                categoria=torneo_data.get('categoria', None),
+                estado=torneo_data['estado'],
+                fecha_inicio=torneo_data.get('fecha_inicio', None),
+                fecha_fin=torneo_data.get('fecha_fin', None),
+                reglamento=torneo_data.get('reglamento', None)
+            )
+            self.torneo_repo.create(torneo)
             self.db.session.commit()
             return torneo
             
@@ -142,20 +139,8 @@ class TorneoService:
             raise ValueError("Torneo no encontrado")
         
         try:
-            # Validar fechas si se proporcionan
-            if 'fecha_inicio' in torneo_data and torneo_data['fecha_inicio']:
-                try:
-                    torneo_data['fecha_inicio'] = datetime.strptime(torneo_data['fecha_inicio'], '%d-%m-%Y').date()
-                except ValueError:
-                    raise ValueError("Formato de fecha_inicio inválido. Use DD-MM-YYYY")
-            
-            if 'fecha_fin' in torneo_data and torneo_data['fecha_fin']:
-                try:
-                    torneo_data['fecha_fin'] = datetime.strptime(torneo_data['fecha_fin'], '%d-%m-%Y').date()
-                except ValueError:
-                    raise ValueError("Formato de fecha_fin inválido. Use DD-MM-YYYY")
-            
-            # Validar que fecha_fin no sea anterior a fecha_inicio si ambas están presentes
+            # La validación de formato de fecha ya se hace en la API.
+            # Aquí solo validamos la lógica de negocio.
             fecha_inicio = torneo_data.get('fecha_inicio', torneo.fecha_inicio)
             fecha_fin = torneo_data.get('fecha_fin', torneo.fecha_fin)
             

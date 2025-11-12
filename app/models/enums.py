@@ -15,7 +15,7 @@ class FuenteReserva(Enum):
 
 
 class TorneoEstado(Enum):
-    BORRADOR = "BORRADOR"
+    CREADO = "CREADO"
     ACTIVO = "ACTIVO"
     FINALIZADO = "FINALIZADO"
     CANCELADO = "CANCELADO"

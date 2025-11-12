@@ -54,5 +54,12 @@ def create_app():
     
     from app.api.timeslot import bp_timeslot
     app.register_blueprint(bp_timeslot)
+
+    from app.api.torneos.torneo import bp_torneo
+    app.register_blueprint(bp_torneo)
+    
+    from app.api.torneos.equipo import bp_equipo
+    app.register_blueprint(bp_equipo)
+    
     
     return app

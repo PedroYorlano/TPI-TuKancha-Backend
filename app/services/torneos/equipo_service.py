@@ -1,4 +1,4 @@
-from app.repositories.equipo_repo import EquipoRepository
+from app.repositories.torneos.equipo_repo import EquipoRepository
 from app.models.equipo import Equipo
 from app import db
 from datetime import datetime
@@ -72,8 +72,17 @@ class EquipoService:
             raise ValueError("Ya existe un equipo con este nombre en el torneo")
         
         try:
-            # Crear el equipo
-            equipo = self.equipo_repo.create(equipo_data)
+            # Crear una instancia de Equipo con los datos
+            equipo = Equipo(
+                nombre=equipo_data['nombre'],
+                torneo_id=equipo_data['torneo_id'],
+                representante=equipo_data.get('representante'),
+                telefono=equipo_data.get('telefono'),
+                email=equipo_data.get('email')
+            )
+            
+            # Guardar el equipo en la base de datos
+            equipo = self.equipo_repo.create(equipo)
             self.db.session.commit()
             return equipo
             

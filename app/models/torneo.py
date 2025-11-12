@@ -10,7 +10,7 @@ class Torneo(db.Model):
     club_id = db.Column(db.Integer, db.ForeignKey("club.id"), nullable=False)
     nombre = db.Column(db.String(120), nullable=False)
     categoria = db.Column(db.String(80))
-    estado = db.Column(db.Enum(TorneoEstado, name="torneo_estado", native_enum=False), nullable=False, default=TorneoEstado.BORRADOR)
+    estado = db.Column(db.Enum(TorneoEstado, name="torneo_estado", native_enum=False), nullable=False, default=TorneoEstado.CREADO)
     fecha_inicio = db.Column(db.Date)
     fecha_fin = db.Column(db.Date)
     reglamento = db.Column(db.Text)

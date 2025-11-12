@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from app import db
 from app.auth.decorators import role_required
-from app.services.equipo_service import EquipoService
+from app.services.torneos.equipo_service import EquipoService
 from app.schemas.torneos.equipo_schema import equipo_schema, equipos_schema
 
 bp_equipo = Blueprint("equipo", __name__, url_prefix="/api/v1/equipos")
@@ -54,7 +54,7 @@ def get_equipos_por_torneo(torneo_id):
 
 # Crear un nuevo equipo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_equipo.post("/")
 def create_equipo():
     try:
@@ -84,7 +84,7 @@ def create_equipo():
 
 # Actualizar un equipo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_equipo.put("/<int:equipo_id>")
 def update_equipo(equipo_id):
     try:
@@ -108,7 +108,7 @@ def update_equipo(equipo_id):
 
 # Eliminar un equipo
 @jwt_required()
-@role_required(["ADMIN", "ORGANIZADOR"])
+@role_required(["Admin"])
 @bp_equipo.delete("/<int:equipo_id>")
 def delete_equipo(equipo_id):
     try:

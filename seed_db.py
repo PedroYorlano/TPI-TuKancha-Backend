@@ -7,7 +7,6 @@ from app.models.club import Club
 from app.models.direccion import Direccion
 from app.models.cancha import Cancha
 from app.models.timeslot import Timeslot, TimeslotEstado
-from app.models.servicio import Servicio
 from werkzeug.security import generate_password_hash
 
 # --- CONFIGURACIÓN ---
