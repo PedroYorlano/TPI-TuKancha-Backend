@@ -6,20 +6,69 @@ from datetime import date, time, timedelta
 
 class CanchaService:
     def __init__(self, db):
+        """
+        Inicializa el servicio de canchas con los repositorios necesarios.
+        
+        Args:
+            db: Instancia de la base de datos SQLAlchemy
+        """
         self.db = db
         self.cancha_repo = CanchaRepository()
         self.club_repo = ClubRepository()
 
     def get_all(self):
+        """
+        Obtiene todas las canchas.
+        
+        Returns:
+            list[Cancha]: Lista de todas las canchas
+        """
         return self.cancha_repo.get_all()
 
     def get_by_predio(self, predio_id):
+        """
+        Obtiene las canchas de un predio específico.
+        
+        Args:
+            predio_id (int): ID del predio
+            
+        Returns:
+            list[Cancha]: Lista de canchas del predio
+        """
         return self.cancha_repo.get_by_predio(predio_id)
 
     def get_by_id(self, cancha_id):
+        """
+        Obtiene una cancha por su ID.
+        
+        Args:
+            cancha_id (int): ID de la cancha a buscar
+            
+        Returns:
+            Cancha: La cancha encontrada o None si no existe
+        """
         return self.cancha_repo.get_by_id(cancha_id)
 
     def create(self, data):
+        """
+        Crea una nueva cancha.
+        
+        Args:
+            data (dict): Datos de la cancha a crear. Debe incluir:
+                - nombre (str): Nombre de la cancha
+                - deporte (str): Deporte que se practica en la cancha
+                - superficie (str): Tipo de superficie de la cancha
+                - techado (bool): Indica si la cancha está techada
+                - iluminacion (bool): Indica si la cancha tiene iluminación
+                - precio_hora (float): Precio por hora de uso
+                - club_id (int): ID del club al que pertenece la cancha
+                
+        Returns:
+            Cancha: La cancha creada
+            
+        Raises:
+            ValueError: Si faltan campos requeridos o los datos son inválidos
+        """
         # Campos requeridos según el modelo Cancha
         required_fields = ['nombre', 'deporte', 'superficie', 'techado', 'iluminacion', 'precio_hora', 'club_id']
         
@@ -72,8 +121,14 @@ class CanchaService:
     def _generar_timeslots_automaticos(self, cancha, club):
         """
         Genera timeslots automáticamente para una cancha nueva.
-        Usa los horarios del club para determinar apertura y cierre.
-        Configuración fija: turnos de 60 minutos sin solapamiento.
+        
+        Args:
+            cancha (Cancha): Instancia de la cancha para la que se generarán los timeslots
+            club (Club): Instancia del club al que pertenece la cancha
+            
+        Note:
+            Este método es de uso interno y no debe ser llamado directamente.
+            Se ejecuta automáticamente al crear una nueva cancha.
         """
         from app.services.timeslot_service import TimeslotService
         
@@ -113,6 +168,26 @@ class CanchaService:
             raise Exception(f"Error al generar timeslots: {e}")
 
     def update(self, cancha_id, data):
+        """
+        Actualiza los datos de una cancha existente.
+        
+        Args:
+            cancha_id (int): ID de la cancha a actualizar
+            data (dict): Datos a actualizar. Puede incluir:
+                - nombre (str, opcional): Nuevo nombre de la cancha
+                - deporte (str, opcional): Nuevo deporte
+                - superficie (str, opcional): Nueva superficie
+                - techado (bool, opcional): Indica si está techada
+                - iluminacion (bool, opcional): Indica si tiene iluminación
+                - precio_hora (float, opcional): Nuevo precio por hora
+                - activa (bool, opcional): Estado de la cancha
+                
+        Returns:
+            Cancha: La cancha actualizada
+            
+        Raises:
+            ValueError: Si la cancha no existe o los datos son inválidos
+        """
         cancha = self.cancha_repo.get_by_id(cancha_id)
         
         if not cancha:
@@ -146,6 +221,18 @@ class CanchaService:
             raise Exception(f"Error al actualizar la cancha: {e}")
 
     def delete(self, cancha_id):
+        """
+        Elimina una cancha del sistema.
+        
+        Args:
+            cancha_id (int): ID de la cancha a eliminar
+            
+        Returns:
+            bool: True si la eliminación fue exitosa
+            
+        Raises:
+            ValueError: Si la cancha no existe o no se puede eliminar
+        """
         cancha = self.cancha_repo.get_by_id(cancha_id)
         
         if not cancha:

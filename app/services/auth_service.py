@@ -6,6 +6,7 @@ from datetime import timedelta
 
 class AuthService:
     def __init__(self):
+        """Inicializa el servicio de autenticación con un repositorio de usuarios."""
         self.user_repo = UserRepository()
     
     def login(self, email, password):
@@ -17,8 +18,11 @@ class AuthService:
             password (str): Contraseña en texto plano
             
         Returns:
-            dict: Contiene access_token, refresh_token y datos del usuario
-            
+            dict: Diccionario con:
+                - access_token (str): Token JWT para autenticación
+                - refresh_token (str): Token para renovar el access token
+                - user (dict): Datos básicos del usuario
+                
         Raises:
             ValueError: Si las credenciales son inválidas o el usuario está inactivo
         """
@@ -78,7 +82,12 @@ class AuthService:
             current_user_id (str): ID del usuario actual como string
             
         Returns:
-            dict: Contiene el nuevo access_token
+            dict: Diccionario con el nuevo access_token y datos del usuario:
+                - access_token (str): Nuevo token JWT de acceso
+                - user (dict): Datos básicos del usuario
+                
+        Raises:
+            ValueError: Si el usuario no existe o está inactivo
         """
         # Convertir string a int para buscar en BD
         user = self.user_repo.get_by_id(int(current_user_id))

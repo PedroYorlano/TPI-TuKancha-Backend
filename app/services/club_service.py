@@ -13,14 +13,14 @@ from datetime import datetime, time
 from app import db
 
 class ClubService:
-    def __init__(self, db):
-        self.db = db
-        self.club_repo = ClubRepository()
-        self.direccion_repo = DireccionRepository()
-        self.club_horario_repo = ClubHorarioRepository()
-        self.user_repo = UserRepository()
-        self.rol_repo = RolRepository()
-
+    """
+    Servicio para la gestión de clubes deportivos.
+    
+    Este servicio maneja la lógica de negocio relacionada con los clubes,
+    incluyendo su creación, actualización, eliminación y consulta,
+    así como la gestión de sus relaciones con direcciones, horarios y usuarios.
+    """
+    
     # Mapeo de días en español a enum DiaSemana
     DIA_MAPPING = {
         'lunes': DiaSemana.LUN,
@@ -33,14 +33,71 @@ class ClubService:
         'sabado': DiaSemana.SAB,  # Sin acento
         'domingo': DiaSemana.DOM
     }
+    
+    def __init__(self, db):
+        """
+        Inicializa el servicio de clubes con los repositorios necesarios.
+        
+        Args:
+            db: Instancia de la base de datos SQLAlchemy
+        """
+        self.db = db
+        self.club_repo = ClubRepository()
+        self.direccion_repo = DireccionRepository()
+        self.club_horario_repo = ClubHorarioRepository()
+        self.user_repo = UserRepository()
+        self.rol_repo = RolRepository()
 
     def get_all(self):
+        """
+        Obtiene todos los clubes registrados en el sistema.
+        
+        Returns:
+            list[Club]: Lista de todos los clubes
+        """
         return self.club_repo.get_all()
 
     def get_by_id(self, id):
+        """
+        Obtiene un club por su ID.
+        
+        Args:
+            id (int): ID del club a buscar
+            
+        Returns:
+            Club: El club encontrado o None si no existe
+            
+        Raises:
+            ValueError: Si el ID no es válido
+        """
         return self.club_repo.get_by_id(id)
 
     def create(self, data):
+        """
+        Crea un nuevo club con toda su información asociada.
+        
+        Este método realiza una transacción atómica que incluye:
+        1. Creación de la dirección del club
+        2. Creación del club
+        3. Creación de los horarios del club (si se proporcionan)
+        4. Creación del usuario administrador del club
+        
+        Args:
+            data (dict): Datos del club a crear. Debe incluir:
+                - nombre (str): Nombre del club
+                - cuit (str): CUIT del club
+                - telefono (str): Teléfono de contacto
+                - direccion (dict): Datos de la dirección
+                - usuario (dict): Datos del usuario administrador
+                - horarios (list[dict], opcional): Lista de horarios del club
+                
+        Returns:
+            Club: El club recién creado
+            
+        Raises:
+            ValueError: Si faltan campos requeridos o los datos son inválidos
+            Exception: Si ocurre un error durante la creación
+        """
         required_fields = ['nombre', 'cuit', 'telefono', 'direccion', 'usuario']
         for field in required_fields:
             if field not in data:
@@ -154,6 +211,26 @@ class ClubService:
             raise Exception(f"Error al crear el club: {str(e)}")
         
     def update(self, club_id, data):
+        """
+        Actualiza los datos de un club existente.
+        
+        Permite actualizar los datos básicos del club y su dirección.
+        
+        Args:
+            club_id (int): ID del club a actualizar
+            data (dict): Datos a actualizar. Puede incluir:
+                - nombre (str, opcional): Nuevo nombre del club
+                - cuit (str, opcional): Nuevo CUIT
+                - telefono (str, opcional): Nuevo teléfono
+                - direccion (dict, opcional): Nueva dirección
+                
+        Returns:
+            Club: El club actualizado
+            
+        Raises:
+            ValueError: Si el club no existe
+            Exception: Si ocurre un error durante la actualización
+        """
         # Obtener el club existente
         club = self.club_repo.get_by_id(club_id)
         if not club:
@@ -181,6 +258,21 @@ class ClubService:
             raise Exception(f"Error al actualizar: {e}")
 
     def delete(self, club_id):
+        """
+        Elimina un club del sistema.
+        
+        Realiza la eliminación del club y todos sus recursos asociados.
+        
+        Args:
+            club_id (int): ID del club a eliminar
+            
+        Returns:
+            Club: El club eliminado
+            
+        Raises:
+            ValueError: Si el club no existe
+            Exception: Si ocurre un error durante la eliminación
+        """
         try:
             club = self.club_repo.get_by_id(club_id)
             if not club:
@@ -191,5 +283,4 @@ class ClubService:
         except Exception as e:
             self.db.session.rollback()
             raise Exception(f"Error al eliminar: {e}")
-    
-    
+
