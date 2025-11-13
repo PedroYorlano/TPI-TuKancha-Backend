@@ -92,7 +92,7 @@ class TimeslotService:
             "horarios": horarios
         }
 
-    def generar_timeslots_para_cancha(self, cancha, fecha_desde: date, fecha_hasta: date, horario_apertura: time, horario_cierre: time, auto_commit: bool = True):
+    def generar_timeslots_para_cancha(self, cancha, fecha_desde: date, fecha_hasta: date, horarios_club=None, horario_apertura: time = None, horario_cierre: time = None, auto_commit: bool = True):
         """
         Genera timeslots para una cancha específica en un rango de fechas.
         Usa configuración fija: turnos de 60 minutos sin solapamiento.
@@ -101,8 +101,9 @@ class TimeslotService:
             cancha: Instancia de Cancha
             fecha_desde: Fecha de inicio (inclusive)
             fecha_hasta: Fecha de fin (inclusive)
-            horario_apertura: Hora de apertura diaria
-            horario_cierre: Hora de cierre diaria
+            horarios_club: Lista de objetos ClubHorario con horarios por día de la semana (recomendado)
+            horario_apertura: Hora de apertura diaria (fallback si no se proveen horarios_club)
+            horario_cierre: Hora de cierre diaria (fallback si no se proveen horarios_club)
             auto_commit: Si debe hacer commit automático (False cuando se llama desde creación de cancha)
             
         Returns:
@@ -111,13 +112,22 @@ class TimeslotService:
         if fecha_desde > fecha_hasta:
             raise ValueError("La fecha desde debe ser anterior a la fecha hasta")
         
+        # Si no se proveen horarios por día, usar horarios fijos (compatibilidad hacia atrás)
+        if horarios_club is None and (horario_apertura is None or horario_cierre is None):
+            raise ValueError("Debe proporcionar horarios_club o horario_apertura/horario_cierre")
+        
         dias_a_generar = [fecha_desde + timedelta(days=d) for d in range((fecha_hasta - fecha_desde).days + 1)]
         nuevos_timeslots = []
         
         for dia in dias_a_generar:
             # Verificar que no existan timeslots para esta cancha en esta fecha
             if not self.timeslot_repo.existen_en_fecha(cancha.id, dia):
-                timeslots_dia = self._calcular_timeslots_para_dia(cancha, dia, horario_apertura, horario_cierre)
+                if horarios_club:
+                    # Usar horarios específicos del día de la semana
+                    timeslots_dia = self._calcular_timeslots_para_dia_con_horarios(cancha, dia, horarios_club)
+                else:
+                    # Usar horarios fijos (compatibilidad)
+                    timeslots_dia = self._calcular_timeslots_para_dia(cancha, dia, horario_apertura, horario_cierre)
                 nuevos_timeslots.extend(timeslots_dia)
         
         if nuevos_timeslots:
@@ -130,7 +140,7 @@ class TimeslotService:
             "cantidad": len(nuevos_timeslots)
         }
 
-    def generar_timeslots_para_club(self, club_id: int, fecha_desde: date, fecha_hasta: date, horario_apertura: time, horario_cierre: time):
+    def generar_timeslots_para_club(self, club_id: int, fecha_desde: date, fecha_hasta: date, horario_apertura: time = None, horario_cierre: time = None, usar_horarios_club: bool = True):
         """
         Genera timeslots para todas las canchas de un club en un rango de fechas.
         Usa configuración fija: turnos de 60 minutos sin solapamiento.
@@ -139,8 +149,10 @@ class TimeslotService:
             club_id: ID del club
             fecha_desde: Fecha de inicio (inclusive)
             fecha_hasta: Fecha de fin (inclusive)
-            horario_apertura: Hora de apertura diaria
-            horario_cierre: Hora de cierre diaria
+            horario_apertura: Hora de apertura diaria (usado si usar_horarios_club=False)
+            horario_cierre: Hora de cierre diaria (usado si usar_horarios_club=False)
+            usar_horarios_club: Si es True, usa los horarios definidos en el club por día de semana.
+                               Si es False, usa horario_apertura y horario_cierre (compatibilidad).
             
         Returns:
             Dict con un mensaje y la cantidad de timeslots generados
@@ -159,13 +171,26 @@ class TimeslotService:
         if not canchas:
             raise ValueError("El club no tiene canchas.")
 
+        # Determinar qué horarios usar
+        horarios_club = None
+        if usar_horarios_club:
+            horarios_club = [h for h in club.horarios if h.activo]
+            if not horarios_club:
+                raise ValueError("El club no tiene horarios definidos. Configure los horarios primero o use horario_apertura/horario_cierre.")
+        else:
+            if horario_apertura is None or horario_cierre is None:
+                raise ValueError("Debe proporcionar horario_apertura y horario_cierre si usar_horarios_club=False")
+
         dias_a_generar = [fecha_desde + timedelta(days=d) for d in range((fecha_hasta - fecha_desde).days + 1)]
         nuevos_timeslots_totales = []
 
         for dia in dias_a_generar:
             for cancha in canchas:
                 if not self.timeslot_repo.existen_en_fecha(cancha.id, dia):
-                    nuevos = self._calcular_timeslots_para_dia(cancha, dia, horario_apertura, horario_cierre)
+                    if horarios_club:
+                        nuevos = self._calcular_timeslots_para_dia_con_horarios(cancha, dia, horarios_club)
+                    else:
+                        nuevos = self._calcular_timeslots_para_dia(cancha, dia, horario_apertura, horario_cierre)
                     nuevos_timeslots_totales.extend(nuevos)
     
         if not nuevos_timeslots_totales:
@@ -174,6 +199,45 @@ class TimeslotService:
         self.timeslot_repo.guardar_bulk(nuevos_timeslots_totales)
         db.session.commit()
         return {"mensaje": f"Se generaron y guardaron {len(nuevos_timeslots_totales)} nuevos timeslots."}
+
+    def _calcular_timeslots_para_dia_con_horarios(self, cancha, dia, horarios_club) -> list:
+        """
+        Calcula los timeslots para un día y cancha específicos usando los horarios del club por día de semana.
+        Configuración fija: turnos de 60 minutos sin solapamiento.
+        
+        Args:
+            cancha: Instancia de Cancha
+            dia: Fecha para la que se generarán los timeslots
+            horarios_club: Lista de objetos ClubHorario con horarios por día de la semana
+            
+        Returns:
+            Lista de objetos Timeslot generados (sin duplicados)
+        """
+        from app.models.enums import DiaSemana
+        
+        # Mapear el día de la semana de Python (0=Lun, 6=Dom) a nuestro enum
+        dias_semana = {
+            0: DiaSemana.LUN,
+            1: DiaSemana.MAR,
+            2: DiaSemana.MIE,
+            3: DiaSemana.JUE,
+            4: DiaSemana.VIE,
+            5: DiaSemana.SAB,
+            6: DiaSemana.DOM
+        }
+        
+        dia_enum = dias_semana[dia.weekday()]
+        
+        # Buscar el horario correspondiente al día de la semana
+        horario_dia = next((h for h in horarios_club if h.dia == dia_enum), None)
+        
+        if not horario_dia:
+            # Si no hay horario definido para este día, no generar timeslots
+            print(f"⚠️  No hay horario definido para {dia_enum.value} ({dia}). No se generarán timeslots.")
+            return []
+        
+        # Usar el método existente con los horarios específicos del día
+        return self._calcular_timeslots_para_dia(cancha, dia, horario_dia.abre, horario_dia.cierra)
 
     def _calcular_timeslots_para_dia(self, cancha, dia, apertura, cierre) -> list:
         """

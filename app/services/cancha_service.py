@@ -151,13 +151,11 @@ class CanchaService:
         # Obtener horarios del club (ya validados en create())
         horarios_club = [h for h in club.horarios if h.activo]
         
-        # Usar el horario más temprano de apertura y más tardío de cierre
-        horario_apertura = min(h.abre for h in horarios_club)
-        horario_cierre = max(h.cierra for h in horarios_club)
-        
-        print(f"📅 Generando timeslots para '{cancha.nombre}'")
-        print(f"   Horario: {horario_apertura.strftime('%H:%M')} - {horario_cierre.strftime('%H:%M')}")
+        print(f"Generando timeslots para '{cancha.nombre}'")
         print(f"   Período: {fecha_desde} a {fecha_hasta}")
+        print(f"   Horarios del club por día:")
+        for h in horarios_club:
+            print(f"      {h.dia.value}: {h.abre.strftime('%H:%M')} - {h.cierra.strftime('%H:%M')}")
         
         # Generar timeslots usando el servicio
         timeslot_service = TimeslotService(self.db)
@@ -167,14 +165,13 @@ class CanchaService:
                 cancha=cancha,
                 fecha_desde=fecha_desde,
                 fecha_hasta=fecha_hasta,
-                horario_apertura=horario_apertura,
-                horario_cierre=horario_cierre,
+                horarios_club=horarios_club,  # Pasar todos los horarios del club
                 auto_commit=False  # No hacer commit aquí, se hará en el create()
             )
-            print(f"✅ {resultado['mensaje']}")
+            print(f"{resultado['mensaje']}")
         except Exception as e:
             # Si falla la generación de timeslots, rollback completo
-            print(f"❌ ERROR al generar timeslots automáticos: {e}")
+            print(f"ERROR al generar timeslots automáticos: {e}")
             import traceback
             traceback.print_exc()
             raise Exception(f"Error al generar timeslots: {e}")
@@ -194,25 +191,26 @@ class CanchaService:
             Exception: Si ocurre un error durante la eliminación
         """
         from app.models.reserva_timeslot import ReservaTimeslot
-        from sqlalchemy import and_
+        from app.models.timeslot import Timeslot
         
         try:
-            # Obtener la cancha con sus timeslots
+            # Obtener la cancha
             cancha = self.get_by_id(cancha_id)
             if not cancha:
                 raise ValueError("La cancha no existe")
-                
-            # Verificar si hay reservas activas en los timeslots de la cancha
-            reservas_activas = db.session.query(ReservaTimeslot).join(
-                cancha.timeslots
-            ).filter(
-                ReservaTimeslot.timeslot_id.in_([ts.id for ts in cancha.timeslots])
-            ).first()
+            
+            # Verificar si hay reservas activas usando un join correcto
+            # Hacemos join: ReservaTimeslot -> Timeslot -> Cancha
+            reservas_activas = self.db.session.query(ReservaTimeslot)\
+                .join(Timeslot, ReservaTimeslot.timeslot_id == Timeslot.id)\
+                .filter(Timeslot.cancha_id == cancha_id)\
+                .first()
             
             if reservas_activas:
                 raise ValueError("No se puede eliminar la cancha porque tiene reservas activas")
             
             # Si no hay reservas, proceder con la eliminación
+            # SQLAlchemy eliminará automáticamente los timeslots asociados si está configurado cascade
             self.cancha_repo.delete(cancha)
             self.db.session.commit()
             return True

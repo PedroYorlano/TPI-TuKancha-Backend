@@ -88,7 +88,16 @@ def generar_timeslots():
     """
     Genera timeslots para un club en un rango de fechas.
     
-    Body (JSON):
+    Puede usar los horarios definidos en el club (recomendado) o especificar horarios fijos.
+    
+    Body (JSON) - Opción 1 (usa horarios del club por día de semana):
+        {
+            "club_id": 1,
+            "fecha_desde": "2025-11-15",
+            "fecha_hasta": "2025-11-30"
+        }
+    
+    Body (JSON) - Opción 2 (usa horarios fijos para todos los días):
         {
             "club_id": 1,
             "fecha_desde": "2025-11-15",
@@ -104,8 +113,8 @@ def generar_timeslots():
     """
     data = request.get_json()
     
-    # Validar campos requeridos
-    required_fields = ['club_id', 'fecha_desde', 'fecha_hasta', 'horario_apertura', 'horario_cierre']
+    # Validar campos requeridos mínimos
+    required_fields = ['club_id', 'fecha_desde', 'fecha_hasta']
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"El campo '{field}' es requerido"}), 400
@@ -115,9 +124,16 @@ def generar_timeslots():
         fecha_desde = datetime.strptime(data['fecha_desde'], '%Y-%m-%d').date()
         fecha_hasta = datetime.strptime(data['fecha_hasta'], '%Y-%m-%d').date()
         
-        # Parsear horas
-        horario_apertura = datetime.strptime(data['horario_apertura'], '%H:%M').time()
-        horario_cierre = datetime.strptime(data['horario_cierre'], '%H:%M').time()
+        # Verificar si se proporcionan horarios específicos
+        usar_horarios_club = True
+        horario_apertura = None
+        horario_cierre = None
+        
+        if 'horario_apertura' in data and 'horario_cierre' in data:
+            # Usar horarios fijos
+            usar_horarios_club = False
+            horario_apertura = datetime.strptime(data['horario_apertura'], '%H:%M').time()
+            horario_cierre = datetime.strptime(data['horario_cierre'], '%H:%M').time()
         
         # Generar timeslots
         resultado = timeslot_service.generar_timeslots_para_club(
@@ -125,7 +141,8 @@ def generar_timeslots():
             fecha_desde=fecha_desde,
             fecha_hasta=fecha_hasta,
             horario_apertura=horario_apertura,
-            horario_cierre=horario_cierre
+            horario_cierre=horario_cierre,
+            usar_horarios_club=usar_horarios_club
         )
         
         return jsonify(resultado), 201
