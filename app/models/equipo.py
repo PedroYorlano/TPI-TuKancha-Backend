@@ -17,6 +17,7 @@ class Equipo(db.Model):
     torneo = db.relationship("Torneo", backref="equipos")
     partidos_local = db.relationship("Partido", foreign_keys="Partido.equipo1_id", back_populates="equipo1")
     partidos_visitante = db.relationship("Partido", foreign_keys="Partido.equipo2_id", back_populates="equipo2")
+    partidos_ganador = db.relationship("Partido", foreign_keys="Partido.ganador_id", back_populates="ganador")
 
     def __repr__(self):
         return f"<Equipo {self.nombre}>"

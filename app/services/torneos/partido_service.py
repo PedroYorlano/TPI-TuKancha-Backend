@@ -52,7 +52,7 @@ class PartidoService:
                 equipo2_id=partido_data['equipo2_id'],
                 goles_equipo1=None,
                 goles_equipo2=None,
-                cancha_id=partido_data.get('cancha_id')
+                ganador_id=None
             )
             
             partido = self.partido_repo.create(partido)
@@ -84,13 +84,23 @@ class PartidoService:
             self.db.session.rollback()
             raise Exception(f"Error al actualizar el partido: {str(e)}")
     
-    def registrar_resultado(self, partido_id, goles_equipo1, goles_equipo2):
+    def registrar_resultado(self, partido_id, data):
         """
         Registra o actualiza el resultado de un partido
         """
         partido = self.partido_repo.get_by_id(partido_id)
+
         if not partido:
             raise ValueError("Partido no encontrado")
+
+        if 'goles_equipo1' not in data or 'goles_equipo2' not in data:
+            raise ValueError("Se requieren los goles de ambos equipos")
+
+        goles_equipo1 = data['goles_equipo1']
+        goles_equipo2 = data['goles_equipo2']
+        
+        if not isinstance(goles_equipo1, int) or not isinstance(goles_equipo2, int):
+            raise ValueError("Los goles deben ser números enteros")
         
         if goles_equipo1 < 0 or goles_equipo2 < 0:
             raise ValueError("Los goles no pueden ser negativos")
@@ -98,12 +108,12 @@ class PartidoService:
         try:
             partido.goles_equipo1 = goles_equipo1
             partido.goles_equipo2 = goles_equipo2
-
+        
             if goles_equipo1 > goles_equipo2:
                 partido.ganador_id = partido.equipo1_id
             elif goles_equipo2 > goles_equipo1:
                 partido.ganador_id = partido.equipo2_id
-            elif goles_equipo1 == goles_equipo2:
+            else:
                 partido.ganador_id = None
             
             self.db.session.commit()

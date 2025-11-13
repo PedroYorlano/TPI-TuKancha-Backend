@@ -13,13 +13,15 @@ class PartidoSchema(ma.SQLAlchemyAutoSchema):
             "equipo2",
             "goles_equipo1",
             "goles_equipo2",
+            "ganador",
             "created_at",
             "updated_at"
         )
     
     torneo = ma.Nested('TorneoSchema', exclude=('partidos', 'equipos'))
-    equipo1 = ma.Nested('EquipoSchema', exclude=('partidos_local', 'partidos_visitante', 'torneo'))
-    equipo2 = ma.Nested('EquipoSchema', exclude=('partidos_local', 'partidos_visitante', 'torneo'))
+    equipo1 = ma.Nested('EquipoSchema', exclude=('partidos_local', 'partidos_visitante', 'partidos_ganador', 'torneo'))
+    equipo2 = ma.Nested('EquipoSchema', exclude=('partidos_local', 'partidos_visitante', 'partidos_ganador', 'torneo'))
+    ganador = ma.Nested('EquipoSchema', exclude=('partidos_local', 'partidos_visitante', 'partidos_ganador', 'torneo'))
 
 partido_schema = PartidoSchema()
 partidos_schema = PartidoSchema(many=True)

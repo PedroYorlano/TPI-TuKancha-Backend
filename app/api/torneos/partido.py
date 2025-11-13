@@ -7,13 +7,6 @@ bp_partido = Blueprint("partido", __name__, url_prefix="/api/v1/partidos")
 
 partido_service = PartidoService(db)
 
-
-# Listar todos los partidos
-@bp_partido.get('/')
-def listar_partidos():
-	partidos = partido_service.get_all()
-	return jsonify(partidos_schema.dump(partidos))
-    
 # Obtener un partido por su ID
 @bp_partido.get('/<int:id>')
 def obtener_partido(id):
@@ -35,7 +28,7 @@ def crear_partido():
 	except ValueError as e:
 		return jsonify({"error": str(e)}), 400
 	except Exception as e:
-		return jsonify({"error": "Error al crear el partido"}), 500
+		return jsonify({"error": "Error al crear el partido" + str(e)}), 500
 
 # Actualizar un partido por su ID
 @bp_partido.put('/<int:id>')
@@ -70,14 +63,14 @@ def listar_partidos_torneo(torneo_id):
 		return jsonify({"error": str(e)}), 500
 
 # Registrar resultado de un partido
-@bp_partido.post('/<int:id>/resultado')
+@bp_partido.patch('/<int:id>/resultado')
 def registrar_resultado(id):
 	data = request.get_json()
 	try:
-		partido = partido_service.update(id, data)
+		partido = partido_service.registrar_resultado(id, data)
 		return jsonify(partido_schema.dump(partido)), 200
 	except ValueError as e:
-		return jsonify({"error": str(e)}), 404
+		return jsonify({"error": str(e)}), 400
 	except Exception as e:
-		return jsonify({"error": "Error al registrar el resultado del partido"}), 500
+		return jsonify({"error": "Error al registrar el resultado del partido" + str(e)}), 500
 
