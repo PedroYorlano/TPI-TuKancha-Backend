@@ -178,6 +178,51 @@ class CanchaService:
             import traceback
             traceback.print_exc()
             raise Exception(f"Error al generar timeslots: {e}")
+            
+    def delete(self, cancha_id):
+        """
+        Elimina una cancha de manera segura, verificando que no tenga reservas activas.
+        
+        Args:
+            cancha_id (int): ID de la cancha a eliminar
+            
+        Returns:
+            bool: True si la cancha fue eliminada exitosamente
+            
+        Raises:
+            ValueError: Si la cancha no existe o tiene reservas activas
+            Exception: Si ocurre un error durante la eliminación
+        """
+        from app.models.reserva_timeslot import ReservaTimeslot
+        from sqlalchemy import and_
+        
+        try:
+            # Obtener la cancha con sus timeslots
+            cancha = self.get_by_id(cancha_id)
+            if not cancha:
+                raise ValueError("La cancha no existe")
+                
+            # Verificar si hay reservas activas en los timeslots de la cancha
+            reservas_activas = db.session.query(ReservaTimeslot).join(
+                cancha.timeslots
+            ).filter(
+                ReservaTimeslot.timeslot_id.in_([ts.id for ts in cancha.timeslots])
+            ).first()
+            
+            if reservas_activas:
+                raise ValueError("No se puede eliminar la cancha porque tiene reservas activas")
+            
+            # Si no hay reservas, proceder con la eliminación
+            self.cancha_repo.delete(cancha)
+            self.db.session.commit()
+            return True
+            
+        except ValueError as e:
+            self.db.session.rollback()
+            raise e
+        except Exception as e:
+            self.db.session.rollback()
+            raise Exception(f"Error al eliminar la cancha: {str(e)}")
 
     def update(self, cancha_id, data):
         """

@@ -86,6 +86,18 @@ class ReservaService:
             self.db.session.rollback()
             raise ValueError(f"Error al crear la reserva: {str(e)}")
 
+    def delete(self, reserva_id):
+        try:
+            reserva = self.reserva_repo.get_by_id(reserva_id)
+            if not reserva:
+                raise ValueError("Reserva no encontrada")
+            self.db.session.delete(reserva)
+            self.db.session.commit()
+            return {"message": "Reserva eliminada exitosamente"}
+        except Exception as e:
+            self.db.session.rollback()
+            raise ValueError(f"Error al eliminar la reserva: {str(e)}")
+
     def cancelar_reserva(self, reserva_id):
         """
         Cancela una reserva y libera los timeslots.

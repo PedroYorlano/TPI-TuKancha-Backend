@@ -41,3 +41,25 @@ def create():
         print("=" * 50)
         return jsonify({"error": "Error al crear la reserva", "details": str(e)}), 500
 
+# Eliminar una reserva
+@bp_reserva.delete("/<int:id>")
+def delete(id):
+    try:
+        reserva_service.delete(id)
+        return jsonify({"message": "Reserva eliminada exitosamente"}), 200
+    except ValueError as e:
+        # Errores de validación (reserva no encontrada, etc.)
+        print(f"Error de validación al eliminar reserva: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        # Errores inesperados
+        import traceback
+        print("=" * 50)
+        print("ERROR AL ELIMINAR RESERVA:")
+        print(f"Tipo: {type(e).__name__}")
+        print(f"Mensaje: {str(e)}")
+        traceback.print_exc()
+        print("=" * 50)
+        return jsonify({"error": "Error al eliminar la reserva", "details": str(e)}), 500
+
+
