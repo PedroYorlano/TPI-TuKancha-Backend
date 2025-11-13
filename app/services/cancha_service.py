@@ -276,29 +276,3 @@ class CanchaService:
         except Exception as e:
             self.db.session.rollback()
             raise Exception(f"Error al actualizar la cancha: {e}")
-
-    def delete(self, cancha_id):
-        """
-        Elimina una cancha del sistema.
-        
-        Args:
-            cancha_id (int): ID de la cancha a eliminar
-            
-        Returns:
-            bool: True si la eliminación fue exitosa
-            
-        Raises:
-            ValueError: Si la cancha no existe o no se puede eliminar
-        """
-        cancha = self.cancha_repo.get_by_id(cancha_id)
-        
-        if not cancha:
-            raise ValueError("Cancha no encontrada")
-        
-        try:
-            self.cancha_repo.delete(cancha)
-            self.db.session.commit()
-            return cancha
-        except Exception as e:
-            self.db.session.rollback()
-            raise Exception(f"Error al eliminar la cancha: {e}")
