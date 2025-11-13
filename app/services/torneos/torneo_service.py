@@ -25,17 +25,17 @@ class TorneoService:
         """
         return self.torneo_repo.get_by_id(torneo_id)
     
-    def get_by_club_id(self, club_id):
+    def get_equipos_torneo(self, torneo_id):
         """
-        Obtiene todos los torneos de un club específico.
+        Obtiene todos los equipos de un torneo.
         
         Args:
-            club_id (int): ID del club
+            torneo_id (int): ID del torneo
             
         Returns:
-            list[Torneo]: Lista de torneos del club
+            list[Equipo]: Lista de equipos del torneo
         """
-        return self.torneo_repo.get_by_club_id(club_id)
+        return self.torneo_repo.get_equipos_torneo(torneo_id)
     
     def get_torneos_activos(self):
         """
@@ -73,6 +73,7 @@ class TorneoService:
                 - fecha_inicio (str, opcional): Fecha de inicio en formato YYYY-MM-DD
                 - fecha_fin (str, opcional): Fecha de fin en formato YYYY-MM-DD
                 - reglamento (str, opcional): Reglamento del torneo
+                - partidos (Partido[], opcional): Se crea en None
                 
         Returns:
             Torneo: El torneo creado
@@ -110,7 +111,8 @@ class TorneoService:
                 estado=torneo_data['estado'],
                 fecha_inicio=torneo_data.get('fecha_inicio', None),
                 fecha_fin=torneo_data.get('fecha_fin', None),
-                reglamento=torneo_data.get('reglamento', None)
+                reglamento=torneo_data.get('reglamento', None),
+                partidos=torneo_data.get('partidos', [])
             )
             self.torneo_repo.create(torneo)
             self.db.session.commit()

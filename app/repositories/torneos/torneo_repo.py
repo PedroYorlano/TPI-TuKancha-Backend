@@ -1,6 +1,7 @@
 from app.models.torneo import Torneo
 from app import db
 from datetime import datetime
+from app.models.equipo import Equipo
 
 class TorneoRepository:
     def get_all(self):
@@ -18,16 +19,16 @@ class TorneoRepository:
         """
         return Torneo.query.get(torneo_id)
     
-    def get_by_club_id(self, club_id):
-        """Obtiene todos los torneos de un club específico.
+    def get_equipos_torneo(self, torneo_id):
+        """Obtiene todos los equipos de un torneo.
         
         Args:
-            club_id (int): ID del club
+            torneo_id (int): ID del torneo
             
         Returns:
-            list[Torneo]: Lista de torneos del club
+            list[Equipo]: Lista de equipos del torneo
         """
-        return Torneo.query.filter_by(club_id=club_id).all()
+        return Equipo.query.filter_by(torneo_id=torneo_id).all()
     
     def get_by_estado(self, estado):
         """Obtiene torneos por estado.
@@ -40,7 +41,7 @@ class TorneoRepository:
         """
         return Torneo.query.filter_by(estado=estado).all()
     
-    def create(self, torneo_data):
+    def create(self, torneo):
         """Crea un nuevo torneo.
         
         Args:
@@ -75,6 +76,9 @@ class TorneoRepository:
         Args:
             torneo (Torneo): Instancia del torneo a eliminar
         """
+        # solución temporal, debería eliminarse recursivamente desde el modelo
+        # equipos = db.relationship("Equipo", backref="torneo", cascade="all, delete-orphan")
+        Equipo.query.filter_by(torneo_id=torneo.id).delete()
         db.session.delete(torneo)
     
     def cambiar_estado(self, torneo, nuevo_estado):

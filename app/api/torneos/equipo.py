@@ -40,18 +40,6 @@ def get_equipo(equipo_id):
     except Exception as e:
         return handle_error(f"Error al obtener el equipo: {str(e)}", 500)
 
-# Obtener equipos por torneo
-@bp_equipo.get("/torneo/<int:torneo_id>")
-def get_equipos_por_torneo(torneo_id):
-    try:
-        equipos = equipo_service.get_by_torneo(torneo_id)
-        return jsonify({
-            "status": "success",
-            "data": equipos_schema.dump(equipos)
-        }), 200
-    except Exception as e:
-        return handle_error(f"Error al obtener equipos del torneo: {str(e)}", 500)
-
 # Crear un nuevo equipo
 @jwt_required()
 @role_required(["Admin"])

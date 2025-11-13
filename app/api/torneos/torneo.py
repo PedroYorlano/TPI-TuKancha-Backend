@@ -9,6 +9,7 @@ from app.services.torneos.equipo_service import EquipoService
 from app.schemas.torneos.torneo_schema import torneo_schema, torneos_schema
 from app.schemas.torneos.equipo_schema import equipo_schema, equipos_schema
 from app.models.enums import TorneoEstado
+import logging
 
 # Esquema para validar fechas en formato DD-MM-YYYY
 def validate_date_format(date_str):
@@ -23,6 +24,7 @@ def handle_error(error, status_code=400):
 
 bp_torneo = Blueprint("torneo", __name__, url_prefix="/api/v1/torneos")
 torneo_service = TorneoService(db)
+equipo_service = EquipoService(db)
 
 # Obtener todos los torneos
 @bp_torneo.get("/")
@@ -141,7 +143,7 @@ def create_torneo():
         return handle_error(str(e), 400)
     except Exception as e:
         db.session.rollback()
-        return handle_error(f"Error al crear el torneo: {str(e)}", 500)
+        return jsonify({"error": f"Error al crear el torneo: {str(e)}"}), 500
 
 # Actualizar un torneo
 @jwt_required()
@@ -287,6 +289,19 @@ def agregar_equipo_torneo(id_torneo):
     except Exception as e:
         db.session.rollback()
         return handle_error(f"Error al agregar el equipo al torneo: {str(e)}", 500)
+
+# Obtener los equipos de un torneo
+@bp_torneo.get("/<int:id_torneo>/equipos")
+def obtener_equipos_torneo(id_torneo):
+    try:
+        equipos = equipo_service.get_by_torneo(id_torneo)
+        return jsonify({
+            "status": "success",
+            "data": equipos_schema.dump(equipos)
+        }), 200
+    except Exception as e:
+        return handle_error(f"Error al obtener los equipos del torneo: {str(e)}", 500)
+
 
 
 

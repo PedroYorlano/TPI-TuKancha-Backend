@@ -1,8 +1,8 @@
-"""Creación inicial de todas las tablas
+"""crear db nuevamente
 
-Revision ID: cbb0c045b5c7
+Revision ID: d32506d48ddd
 Revises: 
-Create Date: 2025-11-09 19:30:01.743602
+Create Date: 2025-11-12 23:00:40.676143
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'cbb0c045b5c7'
+revision = 'd32506d48ddd'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -63,9 +63,35 @@ def upgrade():
     sa.ForeignKeyConstraint(['club_id'], ['club.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('club_horario',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('club_id', sa.Integer(), nullable=False),
+    sa.Column('dia', sa.Enum('LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM', name='dia_semana', native_enum=False), nullable=False),
+    sa.Column('abre', sa.Time(), nullable=False),
+    sa.Column('cierra', sa.Time(), nullable=False),
+    sa.Column('activo', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['club_id'], ['club.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('torneo',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('club_id', sa.Integer(), nullable=False),
+    sa.Column('nombre', sa.String(length=120), nullable=False),
+    sa.Column('categoria', sa.String(length=80), nullable=True),
+    sa.Column('estado', sa.Enum('CREADO', 'ACTIVO', 'FINALIZADO', 'CANCELADO', name='torneo_estado', native_enum=False), nullable=False),
+    sa.Column('fecha_inicio', sa.Date(), nullable=True),
+    sa.Column('fecha_fin', sa.Date(), nullable=True),
+    sa.Column('reglamento', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['club_id'], ['club.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('user',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('club_id', sa.Integer(), nullable=True),
+    sa.Column('club_id', sa.Integer(), nullable=False),
     sa.Column('rol_id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
@@ -79,18 +105,28 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+    op.create_table('equipo',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('torneo_id', sa.Integer(), nullable=False),
+    sa.Column('nombre', sa.String(length=120), nullable=False),
+    sa.Column('representante', sa.String(length=120), nullable=True),
+    sa.Column('telefono', sa.String(length=30), nullable=True),
+    sa.Column('email', sa.String(length=120), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['torneo_id'], ['torneo.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('reserva',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('cancha_id', sa.Integer(), nullable=False),
     sa.Column('cliente_nombre', sa.String(length=120), nullable=False),
     sa.Column('cliente_telefono', sa.String(length=30), nullable=True),
-    sa.Column('cliente_email', sa.String(length=120), nullable=True),
+    sa.Column('cliente_email', sa.String(length=120), nullable=False),
     sa.Column('estado', sa.Enum('PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'NO_ASISTIO', name='reserva_estado', native_enum=False), nullable=False),
     sa.Column('fuente', sa.Enum('WEB', 'PRESENCIAL', 'TELEFONICA', name='fuente_reserva', native_enum=False), nullable=False),
-    sa.Column('observaciones', sa.String(length=255), nullable=True),
+    sa.Column('servicios', sa.String(length=255), nullable=True),
     sa.Column('precio_total', sa.Numeric(precision=10, scale=2), nullable=True),
-    sa.Column('senia_monto', sa.Numeric(precision=10, scale=2), nullable=True),
-    sa.Column('senia_pagada', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['cancha_id'], ['cancha.id'], ),
@@ -106,6 +142,20 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['cancha_id'], ['cancha.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('partido',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('torneo_id', sa.Integer(), nullable=False),
+    sa.Column('equipo1_id', sa.Integer(), nullable=False),
+    sa.Column('equipo2_id', sa.Integer(), nullable=False),
+    sa.Column('goles_equipo1', sa.Integer(), nullable=False),
+    sa.Column('goles_equipo2', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['equipo1_id'], ['equipo.id'], ),
+    sa.ForeignKeyConstraint(['equipo2_id'], ['equipo.id'], ),
+    sa.ForeignKeyConstraint(['torneo_id'], ['torneo.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('reserva_timeslot',
@@ -129,9 +179,13 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_reserva_timeslot_reserva_id'))
 
     op.drop_table('reserva_timeslot')
+    op.drop_table('partido')
     op.drop_table('timeslot')
     op.drop_table('reserva')
+    op.drop_table('equipo')
     op.drop_table('user')
+    op.drop_table('torneo')
+    op.drop_table('club_horario')
     op.drop_table('cancha')
     op.drop_table('club')
     op.drop_table('rol')
