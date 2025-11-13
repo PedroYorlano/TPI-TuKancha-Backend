@@ -11,6 +11,7 @@ class Club(db.Model):
     direccion_id = db.Column(db.Integer, db.ForeignKey('direccion.id'), nullable=False)
     direccion = db.relationship("Direccion", back_populates="clubes", lazy=True)
     canchas = db.relationship("Cancha", backref="club", lazy=True)
+    torneos = db.relationship("Torneo", backref="club", lazy=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     

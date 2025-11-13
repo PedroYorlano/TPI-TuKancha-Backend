@@ -10,7 +10,7 @@ class ClubSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = Club
-        fields = ("id", "nombre", "cuit", "telefono", "direccion", "horarios")
+        fields = ("id", "nombre", "cuit", "telefono", "direccion", "horarios", "torneos")
         load_instance = True 
         include_relationships = True 
 

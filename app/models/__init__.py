@@ -5,5 +5,8 @@ from .direccion import Direccion
 from .timeslot import Timeslot
 from .reserva import Reserva
 from .reserva_timeslot import ReservaTimeslot
+from .torneo import Torneo
+from .equipo import Equipo
+from .partido import Partido
 
-__all__ = ["db", "Cancha", "Club", "Direccion", "Timeslot", "Reserva", "ReservaTimeslot"]
+__all__ = ["db", "Cancha", "Club", "Direccion", "Timeslot", "Reserva", "ReservaTimeslot", "Torneo", "Equipo", "Partido"]
