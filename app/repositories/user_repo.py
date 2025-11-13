@@ -14,6 +14,9 @@ class UserRepository:
     def get_by_email(self, email):
         return User.query.filter_by(email=email).first()
     
+    def get_by_club(self, club_id):
+        return User.query.filter_by(club_id=club_id).all()
+    
     def create(self, user):
         db.session.add(user)
         return user

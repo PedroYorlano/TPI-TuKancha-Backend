@@ -10,6 +10,7 @@ class UserCreateSchema(ma.Schema):
     password = ma.String(required=True)
     rol_id = ma.Integer(required=True)
     club_id = ma.Integer(required=True)
+    telefono = ma.Str(required=False)
 
 # Schema de salida
 class UserSchema(ma.SQLAlchemyAutoSchema):
