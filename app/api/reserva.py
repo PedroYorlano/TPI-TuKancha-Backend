@@ -45,7 +45,7 @@ def create():
 @bp_reserva.delete("/<int:id>")
 def delete(id):
     try:
-        reserva_service.delete(id)
+        reserva_service.cancelar_reserva(id) # Usar el método seguro para cancelar reserva
         return jsonify({"message": "Reserva eliminada exitosamente"}), 200
     except ValueError as e:
         # Errores de validación (reserva no encontrada, etc.)
