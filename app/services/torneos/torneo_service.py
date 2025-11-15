@@ -13,7 +13,10 @@ class TorneoService:
     
     def get_all(self):
         """Obtiene todos los torneos."""
-        return self.torneo_repo.get_all()
+        torneos = self.torneo_repo.get_all()
+        if not torneos:
+            raise NotFoundError("No se encontraron torneos")
+        return torneos
     
     def get_by_id(self, torneo_id):
         """

@@ -3,6 +3,8 @@ from app.models.equipo import Equipo
 from app import db
 from datetime import datetime
 
+from app.errors import NotFoundError, ValidationError, AppError
+
 class EquipoService:
     """
     Servicio para la gestión de equipos en torneos
@@ -22,7 +24,10 @@ class EquipoService:
         Returns:
             list[Equipo]: Lista de todos los equipos
         """
-        return self.equipo_repo.get_all()
+        equipos = self.equipo_repo.get_all()
+        if not equipos:
+            raise NotFoundError("No se encontraron equipos")
+        return equipos
     
     def get_by_id(self, equipo_id):
         """
@@ -34,7 +39,10 @@ class EquipoService:
         Returns:
             Equipo: El equipo encontrado o None
         """
-        return self.equipo_repo.get_by_id(equipo_id)
+        equipo = self.equipo_repo.get_by_id(equipo_id)
+        if not equipo:
+            raise NotFoundError("Equipo no encontrado")
+        return equipo
     
     def get_by_torneo(self, torneo_id):
         """
@@ -46,7 +54,10 @@ class EquipoService:
         Returns:
             list[Equipo]: Lista de equipos del torneo
         """
-        return self.equipo_repo.get_by_torneo(torneo_id)
+        equipos = self.equipo_repo.get_by_torneo(torneo_id)
+        if not equipos:
+            raise NotFoundError("No se encontraron equipos para este torneo")
+        return equipos
     
     def create(self, equipo_data):
         """
@@ -65,11 +76,11 @@ class EquipoService:
         required_fields = ['nombre', 'torneo_id']
         for field in required_fields:
             if field not in equipo_data or not equipo_data[field]:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
         
         # Verificar si ya existe un equipo con el mismo nombre en el torneo
         if self.equipo_repo.existe_equipo_en_torneo(equipo_data['nombre'], equipo_data['torneo_id']):
-            raise ValueError("Ya existe un equipo con este nombre en el torneo")
+            raise ValidationError("Ya existe un equipo con este nombre en el torneo")
         
         try:
             # Crear una instancia de Equipo con los datos
@@ -88,7 +99,7 @@ class EquipoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al crear el equipo: {str(e)}")
+            raise AppError(f"Error al crear el equipo: {str(e)}")
     
     def update(self, equipo_id, equipo_data):
         """
@@ -102,11 +113,15 @@ class EquipoService:
             Equipo: El equipo actualizado
             
         Raises:
-            ValueError: Si el equipo no existe o hay datos inválidos
+            ValidationError: Si el equipo no existe o hay datos inválidos
         """
+        required_fields = ['nombre', 'torneo_id', 'representante', 'telefono', 'email']
+        for field in required_fields:
+            if field not in equipo_data or not equipo_data[field]:
+                raise ValidationError(f"El campo '{field}' es requerido")
         equipo = self.equipo_repo.get_by_id(equipo_id)
         if not equipo:
-            raise ValueError("Equipo no encontrado")
+            raise ValidationError("Equipo no encontrado")
         
         # Verificar si se está intentando cambiar el nombre y ya existe otro con el mismo nombre
         if 'nombre' in equipo_data and equipo_data['nombre'] != equipo.nombre:
@@ -115,7 +130,7 @@ class EquipoService:
                 equipo.torneo_id, 
                 exclude_id=equipo_id
             ):
-                raise ValueError("Ya existe otro equipo con este nombre en el torneo")
+                raise ValidationError("Ya existe otro equipo con este nombre en el torneo")
         
         try:
             # Actualizar el equipo
@@ -125,7 +140,7 @@ class EquipoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al actualizar el equipo: {str(e)}")
+            raise AppError(f"Error al actualizar el equipo: {str(e)}")
     
     def delete(self, equipo_id):
         """
@@ -139,7 +154,7 @@ class EquipoService:
         """
         equipo = self.equipo_repo.get_by_id(equipo_id)
         if not equipo:
-            raise ValueError("Equipo no encontrado")
+            raise NotFoundError("Equipo no encontrado")
         
         try:
             self.equipo_repo.delete(equipo)
@@ -147,4 +162,4 @@ class EquipoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al eliminar el equipo: {str(e)}")
+            raise AppError(f"Error al eliminar el equipo: {str(e)}")
