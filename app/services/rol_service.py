@@ -2,28 +2,39 @@ from app.repositories.rol_repo import RolRepository
 from app.models.rol import Rol
 from app import db
 
+from app.errors import ValidationError, NotFoundError, AppError
+
 class RolService:
     def __init__(self, db):
         self.db = db
         self.rol_repo = RolRepository()
     
     def get_all(self):
-        return self.rol_repo.get_all()
+        rol = self.rol_repo.get_all()
+        if not rol:
+            raise NotFoundError("No se encontraron roles")
+        return rol
     
     def get_by_id(self, id):
-        return self.rol_repo.get_by_id(id)
+        rol = self.rol_repo.get_by_id(id)
+        if not rol:
+            raise NotFoundError("No se encontraron roles")
+        return rol
 
     def get_by_name(self, name):
-        return self.rol_repo.get_by_name(name)
+        rol = self.rol_repo.get_by_name(name)
+        if not rol:
+            raise NotFoundError("No se encontraron roles")
+        return rol
     
     def create(self, rol):
         required_fields = ['nombre']
         for field in required_fields:
             if field not in rol:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
         
         if self.rol_repo.get_by_name(rol['nombre']):
-            raise ValueError("El nombre ya está en uso")
+            raise ValidationError("El nombre ya está en uso")
 
         try:
             nuevo_rol = Rol(
@@ -34,14 +45,14 @@ class RolService:
             return nuevo_rol
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al crear: {e}")
+            raise AppError(f"Error al crear: {e}")
 
     
     def update(self, rol):
         required_fields = ['nombre']
         for field in required_fields:
             if field not in rol:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
         
         try:
             rol_actualizado = self.rol_repo.update(rol)
@@ -49,13 +60,13 @@ class RolService:
             return rol_actualizado
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al actualizar: {e}")
+            raise AppError(f"Error al actualizar: {e}")
     
     def delete(self, rol):
         required_fields = ['id']
         for field in required_fields:
             if field not in rol:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
             
         try:
             rol_actualizado = self.rol_repo.delete(rol)
@@ -63,4 +74,4 @@ class RolService:
             return rol_actualizado
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al eliminar: {e}")
+            raise AppError(f"Error al eliminar: {e}")

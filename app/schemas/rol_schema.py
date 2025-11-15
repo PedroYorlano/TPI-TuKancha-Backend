@@ -13,4 +13,4 @@ class RolSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
 
 rol_schema = RolSchema()
-rols_schema = RolSchema(many=True)
+roles_schema = RolSchema(many=True)
