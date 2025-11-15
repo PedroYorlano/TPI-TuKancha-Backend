@@ -6,199 +6,136 @@ from app.models.enums import TorneoEstado
 
 from app.errors import ValidationError, NotFoundError, AppError
 
+def _parse_date(date_string, field_name):
+    """Helper interno para convertir string YYYY-MM-DD a objeto date."""
+    if not date_string:
+        return None
+    try:
+        return datetime.strptime(date_string, '%Y-%m-%d').date()
+    except ValueError:
+        raise ValidationError(f"Formato de fecha inválido para '{field_name}'. Usar YYYY-MM-DD.")
+
 class TorneoService:
     def __init__(self, db):
         self.db = db
         self.torneo_repo = TorneoRepository()
     
     def get_all(self):
-        """Obtiene todos los torneos."""
         torneos = self.torneo_repo.get_all()
         if not torneos:
             raise NotFoundError("No se encontraron torneos")
         return torneos
     
     def get_by_id(self, torneo_id):
-        """
-        Obtiene un torneo por su ID.
-        
-        Args:
-            torneo_id (int): ID del torneo a buscar
-            
-        Returns:
-            Torneo: El torneo encontrado o None si no existe
-        """
         torneo = self.torneo_repo.get_by_id(torneo_id)
         if not torneo:
             raise NotFoundError("Torneo no encontrado")
         return torneo
     
     def get_equipos_torneo(self, torneo_id):
-        """
-        Obtiene todos los equipos de un torneo.
-        
-        Args:
-            torneo_id (int): ID del torneo
-            
-        Returns:
-            list[Equipo]: Lista de equipos del torneo
-        """
         equipos = self.torneo_repo.get_equipos_torneo(torneo_id)
         if not equipos:
-            raise NotFoundError("Equipos no encontrados para el torneo")
-
+            raise NotFoundError("No se encontraron equipos para el torneo")
         return equipos
-    
+
     def get_torneos_activos(self):
-        """
-        Obtiene todos los torneos activos.
-        
-        Returns:
-            list[Torneo]: Lista de torneos activos
-        """
-        torneo_activo = self.torneo_repo.get_torneos_activos()
-        if not torneo_activo:
+        torneos_activos = self.torneo_repo.get_torneos_activos()
+        if not torneos_activos:
             raise NotFoundError("No se encontraron torneos activos")
-        return torneo_activo
-    
-    def get_torneos_por_fecha(self, fecha_inicio, fecha_fin=None):
-        """
-        Obtiene torneos por rango de fechas.
-        
-        Args:
-            fecha_inicio (date): Fecha de inicio del rango
-            fecha_fin (date, optional): Fecha de fin del rango. Si no se especifica, 
-                                      se busca solo por fecha_inicio.
-                                      
-        Returns:
-            list[Torneo]: Lista de torneos en el rango de fechas
-        """
+        return torneos_activos
+
+    def get_torneos_por_fecha(self, fecha_inicio_str, fecha_fin_str=None):
+        fecha_inicio = _parse_date(fecha_inicio_str, "fecha_inicio")
+        fecha_fin = _parse_date(fecha_fin_str, "fecha_fin")
+
+        if not fecha_inicio:
+            raise ValidationError("El parámetro 'fecha_inicio' es requerido.")
+
         torneo_por_fecha = self.torneo_repo.get_torneos_por_fecha(fecha_inicio, fecha_fin)
         if not torneo_por_fecha:
             raise NotFoundError("No se encontraron torneos para esta(s) fecha(s)")
         return torneo_por_fecha
     
     def create(self, torneo_data):
-        """
-        Crea un nuevo torneo.
-        
-        Args:
-            torneo_data (dict): Datos del torneo a crear. Debe incluir:
-                - nombre (str): Nombre del torneo
-                - club_id (int): ID del club organizador
-                - categoria (str, opcional): Categoría del torneo
-                - estado (str, opcional): Estado inicial (default: CREADO)
-                - fecha_inicio (str, opcional): Fecha de inicio en formato YYYY-MM-DD
-                - fecha_fin (str, opcional): Fecha de fin en formato YYYY-MM-DD
-                - reglamento (str, opcional): Reglamento del torneo
-                - partidos (Partido[], opcional): Se crea en None
-                
-        Returns:
-            Torneo: El torneo creado
-            
-        Raises:
-            ValueError: Si faltan campos requeridos o los datos son inválidos
-        """
         required_fields = ['nombre', 'club_id']
         for field in required_fields:
             if field not in torneo_data or not torneo_data[field]:
                 raise ValidationError(f"El campo '{field}' es requerido")
         
         try:
-            # La validación de formato de fecha YA NO se hace en la API.
-            # TODO validar formato de fecha
-            if ('fecha_inicio' in torneo_data and torneo_data.get('fecha_inicio') and 
-                'fecha_fin' in torneo_data and torneo_data.get('fecha_fin') and 
-                torneo_data['fecha_fin'] < torneo_data['fecha_inicio']):
+            fecha_inicio = _parse_date(torneo_data.get('fecha_inicio'), 'fecha_inicio')
+            fecha_fin = _parse_date(torneo_data.get('fecha_fin'), 'fecha_fin')
+            
+            if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
                 raise ValidationError("La fecha de fin no puede ser anterior a la fecha de inicio")
             
-            # Validar estado si se proporciona
+            estado_enum = TorneoEstado.CREADO
             if 'estado' in torneo_data and torneo_data['estado']:
                 try:
-                    torneo_data['estado'] = TorneoEstado(torneo_data['estado'].upper())
+                    estado_enum = TorneoEstado(torneo_data['estado'].upper())
                 except ValueError:
                     raise ValidationError(f"Estado inválido. Debe ser uno de: {', '.join([e.value for e in TorneoEstado])}")
-            else:
-                torneo_data['estado'] = TorneoEstado.CREADO
             
             # Crear el torneo
             torneo = Torneo(
                 nombre=torneo_data['nombre'],
                 club_id=torneo_data['club_id'],
-                categoria=torneo_data.get('categoria', None),
-                estado=torneo_data['estado'],
-                fecha_inicio=torneo_data.get('fecha_inicio', None),
-                fecha_fin=torneo_data.get('fecha_fin', None),
-                reglamento=torneo_data.get('reglamento', None),
-                partidos=torneo_data.get('partidos', [])
+                categoria=torneo_data.get('categoria'),
+                estado=estado_enum,
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
+                reglamento=torneo_data.get('reglamento'),
             )
             self.torneo_repo.create(torneo)
             self.db.session.commit()
             return torneo
             
+        except ValidationError as e:
+            self.db.session.rollback()
+            raise e
         except Exception as e:
             self.db.session.rollback()
             raise AppError(f"Error al crear el torneo: {str(e)}")
     
     def update(self, torneo_id, torneo_data):
-        """
-        Actualiza un torneo existente.
-        
-        Args:
-            torneo_id (int): ID del torneo a actualizar
-            torneo_data (dict): Datos a actualizar
-            
-        Returns:
-            Torneo: El torneo actualizado
-            
-        Raises:
-            ValueError: Si el torneo no existe o los datos son inválidos
-        """
-        torneo = self.torneo_repo.get_by_id(torneo_id)
-        if not torneo:
-            raise NotFoundError("Torneo no encontrado")
+        torneo = self.get_by_id(torneo_id)
         
         try:
-            # La validación de formato de fecha ya NO se hace en la API.
-            # TODO validar formato de fecha
-            fecha_inicio = torneo_data.get('fecha_inicio', torneo.fecha_inicio)
-            fecha_fin = torneo_data.get('fecha_fin', torneo.fecha_fin)
+            fecha_inicio_str = torneo_data.get('fecha_inicio')
+            fecha_fin_str = torneo_data.get('fecha_fin')
+
+            fecha_inicio = _parse_date(fecha_inicio_str, 'fecha_inicio') if fecha_inicio_str else torneo.fecha_inicio
+            fecha_fin = _parse_date(fecha_fin_str, 'fecha_fin') if fecha_fin_str else torneo.fecha_fin
             
             if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
                 raise ValidationError("La fecha de fin no puede ser anterior a la fecha de inicio")
             
-            # Validar estado si se proporciona
             if 'estado' in torneo_data and torneo_data['estado']:
                 try:
-                    torneo_data['estado'] = TorneoEstado(torneo_data['estado'].upper())
+                    torneo.estado = TorneoEstado(torneo_data['estado'].upper())
                 except ValueError:
                     raise ValidationError(f"Estado inválido. Debe ser uno de: {', '.join([e.value for e in TorneoEstado])}")
             
-            # Actualizar el torneo
-            torneo_actualizado = self.torneo_repo.update(torneo, torneo_data)
+            # Actualizar campos (usando el patrón 'get' para permitir PATCH)
+            torneo.nombre = torneo_data.get('nombre', torneo.nombre)
+            torneo.club_id = torneo_data.get('club_id', torneo.club_id)
+            torneo.categoria = torneo_data.get('categoria', torneo.categoria)
+            torneo.fecha_inicio = fecha_inicio
+            torneo.fecha_fin = fecha_fin
+            torneo.reglamento = torneo_data.get('reglamento', torneo.reglamento)
+
             self.db.session.commit()
-            return torneo_actualizado
+            return torneo
             
+        except ValidationError as e:
+            self.db.session.rollback()
+            raise e
         except Exception as e:
             self.db.session.rollback()
             raise AppError(f"Error al actualizar el torneo: {str(e)}")
     
     def delete(self, torneo_id):
-        """
-        Elimina un torneo.
-        
-        Args:
-            torneo_id (int): ID del torneo a eliminar
-            
-        Returns:
-            bool: True si se eliminó correctamente
-            
-        Raises:
-            ValueError: Si el torneo no existe o no se puede eliminar
-        """
-        torneo = self.torneo_repo.get_by_id(torneo_id)
-        if not torneo:
-            raise NotFoundError("Torneo no encontrado")
+        torneo = self.get_by_id(torneo_id)
         
         try:
             self.torneo_repo.delete(torneo)
@@ -208,57 +145,89 @@ class TorneoService:
             self.db.session.rollback()
             raise AppError(f"Error al eliminar el torneo: {str(e)}")
     
-    def cambiar_estado(self, torneo_id, nuevo_estado):
-        """
-        Cambia el estado de un torneo.
+    def cambiar_estado(self, torneo_id, data):
+        torneo = self.get_by_id(torneo_id)
         
-        Args:
-            torneo_id (int): ID del torneo
-            nuevo_estado (str): Nuevo estado (CREADO, ACTIVO, FINALIZADO, CANCELADO)
-            
-        Returns:
-            Torneo: El torneo actualizado
-            
-        Raises:
-            ValueError: Si el torneo no existe o el estado es inválido
-        """
-        torneo = self.torneo_repo.get_by_id(torneo_id)
-        if not torneo:
-            raise NotFoundError("Torneo no encontrado")
+        if not data or 'estado' not in data:
+            raise ValidationError("El campo 'estado' es requerido")
+        nuevo_estado_str = data['estado']
         
         try:
-            # Validar el nuevo estado
             try:
-                estado_enum = TorneoEstado(nuevo_estado.upper())
+                estado_enum = TorneoEstado(nuevo_estado_str.upper())
             except ValueError:
                 raise ValidationError(f"Estado inválido. Debe ser uno de: {', '.join([e.value for e in TorneoEstado])}")
             
-            # Validar transiciones de estado
-            if torneo.estado == TorneoEstado.FINALIZADO and estado_enum != TorneoEstado.FINALIZADO:
+            if torneo.estado == TorneoEstado.FINALIZADO:
                 raise ValidationError("No se puede modificar el estado de un torneo finalizado")
-                
-            if torneo.estado == TorneoEstado.CANCELADO and estado_enum != TorneoEstado.CANCELADO:
-                raise ValidationError("No se puede modificar el estado de un torneo cancelado")
             
-            # Actualizar el estado
-            torneo_actualizado = self.torneo_repo.cambiar_estado(torneo, estado_enum)
+            torneo.estado = estado_enum
             self.db.session.commit()
-            return torneo_actualizado
+            return torneo
             
+        except ValidationError as e:
+            self.db.session.rollback()
+            raise e
         except Exception as e:
             self.db.session.rollback()
             raise AppError(f"Error al cambiar el estado del torneo: {str(e)}")
 
-    def mostrar_tabla_posiciones(self, torneo_id):
-        torneo = self.torneo_repo.get_by_id(torneo_id)
-        if not torneo:
-            raise NotFoundError("Torneo no encontrado")
+    def agregar_equipo(self, torneo_id, equipo_id):
+        torneo = self.get_by_id(torneo_id)
+        equipo = equipo_service.get_by_id(equipo_id)
         
+        try:
+            torneo.equipos.append(equipo)
+            self.db.session.commit()
+            return torneo
+        except Exception as e:
+            self.db.session.rollback()
+            raise AppError(f"Error al agregar el equipo al torneo: {str(e)}")
+
+    def get_tabla_posiciones(self, torneo_id):
+        """
+        Calcula la tabla de posiciones para un torneo en tiempo real.
+        Utiliza las relaciones de 'partidos_local', 'partidos_visitante'
+        y la nueva 'partidos_ganador' para eficiencia.
+        """
+        torneo = self.get_by_id(torneo_id) 
+        tabla_calculada = []
         for equipo in torneo.equipos:
-            puntos = equipo.partidos_ganados * 3 + equipo.partidos_empatados * 1
-            print(f"Equipo: {equipo.nombre}")
-            print(f"Partidos ganados: {equipo.partidos_ganados}")
-            print(f"Partidos perdidos: {equipo.partidos_perdidos}")
-            print(f"Partidos empatados: {equipo.partidos_empatados}")
-            print(f"Puntos: {puntos}")
-            print("-------------------------")
+            stats = {
+                "id": equipo.id,
+                "nombre": equipo.nombre,
+                "PJ": 0, # Partidos Jugados
+                "PG": 0, # Partidos Ganados
+                "PE": 0, # Partidos Empatados
+                "PP": 0, # Partidos Perdidos
+                "GF": 0, # Goles a Favor
+                "GC": 0, # Goles en Contra
+                "Puntos": 0
+            }
+
+            partidos_local = equipo.partidos_local
+            partidos_visitante = equipo.partidos_visitante
+            
+            stats["PJ"] = len(partidos_local) + len(partidos_visitante)
+            stats["PG"] = len(equipo.partidos_ganador)
+
+            for p in partidos_local:
+                stats["GF"] += p.goles_equipo1
+                stats["GC"] += p.goles_equipo2
+                if p.goles_equipo1 == p.goles_equipo2:
+                    stats["PE"] += 1
+
+            for p in partidos_visitante:
+                stats["GF"] += p.goles_equipo2
+                stats["GC"] += p.goles_equipo1
+                if p.goles_equipo1 == p.goles_equipo2:
+                    stats["PE"] += 1
+
+            stats["PP"] = stats["PJ"] - stats["PG"] - stats["PE"]
+            stats["Puntos"] = (stats["PG"] * 3) + (stats["PE"] * 1)
+            
+            tabla_calculada.append(stats)
+
+        tabla_ordenada = sorted(tabla_calculada, key=lambda x: x["Puntos"], reverse=True)
+        
+        return tabla_ordenada

@@ -21,19 +21,28 @@ class PartidoService:
         """
         Obtiene todos los partidos
         """
-        return self.partido_repo.get_all()
+        partidos = self.partido_repo.get_all()
+        if not partidos:
+            raise NotFoundError("No se encontraron partidos")
+        return partidos
     
     def get_by_id(self, partido_id):
         """
         Obtiene un partido por su ID
         """
-        return self.partido_repo.get_by_id(partido_id)
+        partido = self.partido_repo.get_by_id(partido_id)
+        if not partido:
+            raise NotFoundError("Partido no encontrado")
+        return partido
     
     def get_by_torneo(self, torneo_id):
         """
         Obtiene todos los partidos de un torneo específico
         """
-        return self.partido_repo.get_by_torneo(torneo_id)
+        partidos = self.partido_repo.get_by_torneo(torneo_id)
+        if not partidos:
+            raise NotFoundError("No se encontraron partidos")
+        return partidos
     
     def create(self, partido_data):
         """

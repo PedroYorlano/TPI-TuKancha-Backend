@@ -11,8 +11,6 @@ partido_service = PartidoService(db)
 @bp_partido.get('/<int:id>')
 def obtener_partido(id):
 	partido = partido_service.get_by_id(id)
-	if partido is None:
-		return jsonify({"error": "Partido no encontrado"}), 404
 	return jsonify(partido_schema.dump(partido))
 
 # Crear un nuevo partido
