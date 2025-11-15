@@ -3,6 +3,7 @@ from app.repositories.club_repo import ClubRepository
 from app.models.cancha import Cancha
 from datetime import date, time, timedelta
 
+from app.errors import ConflictError, ValidationError, AppError, NotFoundError
 
 class CanchaService:
     def __init__(self, db):
@@ -23,19 +24,11 @@ class CanchaService:
         Returns:
             list[Cancha]: Lista de todas las canchas
         """
-        return self.cancha_repo.get_all()
+        canchas = self.cancha_repo.get_all()
+        if not canchas:
+            raise NotFoundError("No se encontraron canchas")
+        return canchas
 
-    def get_by_predio(self, predio_id):
-        """
-        Obtiene las canchas de un predio específico.
-        
-        Args:
-            predio_id (int): ID del predio
-            
-        Returns:
-            list[Cancha]: Lista de canchas del predio
-        """
-        return self.cancha_repo.get_by_predio(predio_id)
     
     def get_by_club(self, club_id):
         """
@@ -47,7 +40,10 @@ class CanchaService:
         Returns:
             list[Cancha]: Lista de canchas del club
         """
-        return self.cancha_repo.get_by_club(club_id)
+        canchas = self.cancha_repo.get_by_club(club_id)
+        if not canchas:
+            raise NotFoundError("No se encontraron canchas")
+        return canchas
 
     def get_by_id(self, cancha_id):
         """
@@ -59,7 +55,10 @@ class CanchaService:
         Returns:
             Cancha: La cancha encontrada o None si no existe
         """
-        return self.cancha_repo.get_by_id(cancha_id)
+        cancha = self.cancha_repo.get_by_id(cancha_id)
+        if not cancha:
+            raise NotFoundError("Cancha no encontrada")
+        return cancha
 
     def create(self, data):
         """
@@ -86,18 +85,18 @@ class CanchaService:
         
         for field in required_fields:
             if field not in data:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
         
         try:
             # Verificar que el club existe
             club = self.club_repo.get_by_id(data['club_id'])
             if not club:
-                raise ValueError(f"Club con ID {data['club_id']} no encontrado")
+                raise ValidationError(f"Club con ID {data['club_id']} no encontrado")
             
             # ✅ VALIDACIÓN: Verificar que el club tenga horarios definidos
             horarios_club = [h for h in club.horarios if h.activo]
             if not horarios_club:
-                raise ValueError(
+                raise ValidationError(
                     f"El club '{club.nombre}' no tiene horarios definidos. "
                     f"Debe configurar los horarios del club antes de crear canchas."
                 )
@@ -123,12 +122,12 @@ class CanchaService:
             self.db.session.commit()
             return nueva_cancha
             
-        except ValueError as e:
+        except ValidationError as e:
             self.db.session.rollback()
             raise e
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al crear la cancha: {e}")
+            raise AppError(f"Error al crear la cancha: {e}")
     
     def _generar_timeslots_automaticos(self, cancha, club):
         """
@@ -170,11 +169,7 @@ class CanchaService:
             )
             print(f"{resultado['mensaje']}")
         except Exception as e:
-            # Si falla la generación de timeslots, rollback completo
-            print(f"ERROR al generar timeslots automáticos: {e}")
-            import traceback
-            traceback.print_exc()
-            raise Exception(f"Error al generar timeslots: {e}")
+            raise AppError(f"Error al generar timeslots: {e}")
             
     def delete(self, cancha_id):
         """
@@ -197,7 +192,7 @@ class CanchaService:
             # Obtener la cancha
             cancha = self.get_by_id(cancha_id)
             if not cancha:
-                raise ValueError("La cancha no existe")
+                raise NotFoundError("La cancha no existe")
             
             # Verificar si hay reservas activas usando un join correcto
             # Hacemos join: ReservaTimeslot -> Timeslot -> Cancha
@@ -207,7 +202,7 @@ class CanchaService:
                 .first()
             
             if reservas_activas:
-                raise ValueError("No se puede eliminar la cancha porque tiene reservas activas")
+                raise ConflictError("No se puede eliminar la cancha porque tiene reservas activas")
             
             # Si no hay reservas, proceder con la eliminación
             # SQLAlchemy eliminará automáticamente los timeslots asociados si está configurado cascade
@@ -215,12 +210,12 @@ class CanchaService:
             self.db.session.commit()
             return True
             
-        except ValueError as e:
+        except NotFoundError as e:
             self.db.session.rollback()
             raise e
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al eliminar la cancha: {str(e)}")
+            raise AppError(f"Error al eliminar la cancha: {str(e)}")
 
     def update(self, cancha_id, data):
         """
@@ -246,7 +241,7 @@ class CanchaService:
         cancha = self.cancha_repo.get_by_id(cancha_id)
         
         if not cancha:
-            raise ValueError("Cancha no encontrada")
+            raise NotFoundError("Cancha no encontrada")
         
         try:
             # Actualizar solo los campos que vienen en data
@@ -273,4 +268,4 @@ class CanchaService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al actualizar la cancha: {e}")
+            raise AppError(f"Error al actualizar la cancha: {e}")
