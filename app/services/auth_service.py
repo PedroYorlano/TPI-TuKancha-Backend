@@ -44,6 +44,7 @@ class AuthService:
         additional_claims = {
             "rol": user.rol.nombre,  # Nombre del rol (admin, encargado, etc.)
             "club_id": user.club_id,
+            "club_nombre": user.club.nombre if user.club else None,
             "nombre": user.nombre,
             "email": user.email
         }
@@ -70,7 +71,8 @@ class AuthService:
                 "nombre": user.nombre,
                 "email": user.email,
                 "rol": user.rol.nombre,
-                "club_id": user.club_id
+                "club_id": user.club_id,
+                "club_nombre": user.club.nombre if user.club else None
             }
         }
     

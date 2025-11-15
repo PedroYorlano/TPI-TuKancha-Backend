@@ -1,4 +1,5 @@
 from app.models.reserva import Reserva
+from app.models.cancha import Cancha
 from app import db
 
 class ReservaRepository:
@@ -10,6 +11,13 @@ class ReservaRepository:
     
     def get_all(self):
         return Reserva.query.all()
+    
+    def get_by_club_id(self, club_id):
+        """
+        Obtiene todas las reservas de un club específico.
+        """
+        reservas = Reserva.query.join(Cancha).filter(Cancha.club_id == club_id).all()
+        return reservas
     
     def create(self, reserva):
         db.session.add(reserva)

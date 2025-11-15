@@ -20,6 +20,12 @@ class ReservaService:
         if not reserva:
             raise NotFoundError("Reserva no encontrada")
         return reserva
+    
+    def get_by_club_id(self, club_id):
+        """
+        Obtiene todas las reservas de un club específico.
+        """
+        return self.reserva_repo.get_by_club_id(club_id)
 
     def create(self, data):
         """

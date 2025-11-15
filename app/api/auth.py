@@ -27,7 +27,8 @@ def login():
                 "nombre": "Admin",
                 "email": "admin@clubejemplo.com",
                 "rol": "admin",
-                "club_id": 1
+                "club_id": 1,
+                "club_nombre": "Club Ejemplo"
             }
         }
     """
