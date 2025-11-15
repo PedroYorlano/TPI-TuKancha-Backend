@@ -38,5 +38,5 @@ def actualizar_rol(id):
 @bp_rol.delete('/<int:id>')
 def eliminar_rol(id):
     rol_service.delete(id)
-    return jsonify({"message": "Rol eliminado exitosamente"}), 204
+    return jsonify({"message": "Rol eliminado exitosamente"}), 200
 
