@@ -6,6 +6,7 @@ class ReservaEstado(Enum):
     CONFIRMADA = "CONFIRMADA"
     CANCELADA = "CANCELADA"
     NO_ASISTIO = "NO_ASISTIO"
+    PAGADO = "PAGADO"
 
 
 class FuenteReserva(Enum):

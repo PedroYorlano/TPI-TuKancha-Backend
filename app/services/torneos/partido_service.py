@@ -3,6 +3,8 @@ from app.models.partido import Partido
 from app import db
 from datetime import datetime
 
+from app.errors import ValidationError, NotFoundError, AppError
+
 class PartidoService:
     """
     Servicio para la gestión de partidos en torneos
@@ -40,10 +42,10 @@ class PartidoService:
         required_fields = ['torneo_id', 'equipo1_id', 'equipo2_id']
         for field in required_fields:
             if field not in partido_data or not partido_data[field]:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
         
         if partido_data['equipo1_id'] == partido_data['equipo2_id']:
-            raise ValueError("Un equipo no puede jugar contra sí mismo")
+            raise ValidationError("Un equipo no puede jugar contra sí mismo")
         
         try:
             partido = Partido(
@@ -69,11 +71,11 @@ class PartidoService:
         """
         partido = self.partido_repo.get_by_id(partido_id)
         if not partido:
-            raise ValueError("Partido no encontrado")
+            raise NotFoundError("Partido no encontrado")
         
         if 'equipo1_id' in partido_data and 'equipo2_id' in partido_data:
             if partido_data['equipo1_id'] == partido_data['equipo2_id']:
-                raise ValueError("Un equipo no puede jugar contra sí mismo")
+                raise ValidationError("Un equipo no puede jugar contra sí mismo")
         
         try:
             partido_actualizado = self.partido_repo.update(partido, partido_data)
@@ -91,19 +93,19 @@ class PartidoService:
         partido = self.partido_repo.get_by_id(partido_id)
 
         if not partido:
-            raise ValueError("Partido no encontrado")
+            raise NotFoundError("Partido no encontrado")
 
         if 'goles_equipo1' not in data or 'goles_equipo2' not in data:
-            raise ValueError("Se requieren los goles de ambos equipos")
+            raise ValidationError("Se requieren los goles de ambos equipos")
 
         goles_equipo1 = data['goles_equipo1']
         goles_equipo2 = data['goles_equipo2']
         
         if not isinstance(goles_equipo1, int) or not isinstance(goles_equipo2, int):
-            raise ValueError("Los goles deben ser números enteros")
+            raise ValidationError("Los goles deben ser números enteros")
         
         if goles_equipo1 < 0 or goles_equipo2 < 0:
-            raise ValueError("Los goles no pueden ser negativos")
+            raise ValidationError("Los goles no pueden ser negativos")
         
         try:
             partido.goles_equipo1 = goles_equipo1
@@ -129,11 +131,12 @@ class PartidoService:
         """
         partido = self.partido_repo.get_by_id(partido_id)
         if not partido:
-            raise ValueError("Partido no encontrado")
+            raise NotFoundError("Partido no encontrado")
         
         try:
             self.partido_repo.delete(partido)
             self.db.session.commit()
+            return {"message": "Partido eliminado exitosamente"}
             
         except Exception as e:
             self.db.session.rollback()

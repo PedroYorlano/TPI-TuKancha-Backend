@@ -6,6 +6,10 @@ from flask_marshmallow import Marshmallow
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
+from flask import jsonify
+
+from app.errors import AppError, NotFoundError, ValidationError, AuthError, ConflictError
+from werkzeug.exceptions import NotFound, MethodNotAllowed, InternalServerError
 
 load_dotenv()
 
@@ -35,6 +39,50 @@ def create_app():
     )
     
     ma.init_app(app)
+
+    @app.errorhandler(AppError)
+    def handle_app_error(error):
+        """Manejador genérico para nuestros errores personalizados."""
+        response = error.to_dict()
+        app.logger.warning(f"Error de aplicación: {error.message}") # Log interno
+        return jsonify(response), error.status_code
+
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(error):
+        """Manejador para errores de validación (400)."""
+        return jsonify(error.to_dict()), error.status_code
+
+    @app.errorhandler(NotFoundError)
+    def handle_not_found_error(error):
+        """Manejador para errores de 'no encontrado' (404)."""
+        return jsonify(error.to_dict()), error.status_code
+
+    @app.errorhandler(ConflictError)
+    def handle_conflict_error(error):
+        """Manejador para errores de conflicto (409)."""
+        return jsonify(error.to_dict()), error.status_code
+
+    @app.errorhandler(AuthError)
+    def handle_auth_error(error):
+        """Manejador para errores de autenticación (401)."""
+        return jsonify(error.to_dict()), error.status_code
+    
+    # --- Manejadores para errores nativos de Flask/Werkzeug ---
+    
+    @app.errorhandler(NotFound) # Error 404 de Flask (ruta no encontrada)
+    def handle_flask_not_found(error):
+        return jsonify({"error": "Ruta no encontrada."}), 404
+
+    @app.errorhandler(MethodNotAllowed) # Error 405 de Flask
+    def handle_method_not_allowed(error):
+        return jsonify({"error": "Método HTTP no permitido para esta ruta."}), 405
+
+    @app.errorhandler(InternalServerError) # Error 500 genérico
+    @app.errorhandler(Exception) # Atrapa-todo para cualquier error no manejado
+    def handle_generic_exception(error):
+        """Manejador para errores 500 y excepciones no controladas."""
+        app.logger.error(f"Error interno no capturado: {error}", exc_info=True)
+        return jsonify({"error": "Ocurrió un error interno en el servidor."}), 500
 
     # ✅ Registrar blueprints SIN duplicar url_prefix
     from app.api.auth import bp_auth

@@ -5,6 +5,8 @@ from app.models.reserva_timeslot import ReservaTimeslot
 from app import db
 from datetime import datetime
 
+from app.errors import ValidationError, NotFoundError, AppError
+
 class ReservaService:
     def __init__(self):
         self.db = db
@@ -14,7 +16,10 @@ class ReservaService:
         return self.reserva_repo.get_all()
 
     def get_by_id(self, id):
-        return self.reserva_repo.get_by_id(id)
+        reserva = self.reserva_repo.get_by_id(id)
+        if not reserva:
+            raise NotFoundError("Reserva no encontrada")
+        return reserva
 
     def create(self, data):
         """
@@ -32,11 +37,11 @@ class ReservaService:
         required_fields = ['timeslot_ids', 'cliente_nombre', 'cliente_email', 'fuente']
         for field in required_fields:
             if field not in data or not data[field]:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
         
         timeslot_ids = data.get('timeslot_ids')
         if not isinstance(timeslot_ids, list) or len(timeslot_ids) == 0:
-            raise ValueError("'timeslot_ids' debe ser una lista con al menos un ID")
+            raise ValidationError("'timeslot_ids' debe ser una lista con al menos un ID")
 
         try:
             # Bloquear timeslots
@@ -45,14 +50,14 @@ class ReservaService:
                                      .all()
 
             if len(timeslots) != len(timeslot_ids):
-                raise ValueError("Uno o más timeslots no existen.")
+                raise ValidationError("Uno o más timeslots no existen.")
 
             precio_total = 0
             
             # Validar disponibilidad
             for ts in timeslots:
                 if ts.estado != TimeslotEstado.DISPONIBLE:
-                    raise ValueError(f"El timeslot {ts.id} (de {ts.inicio}) ya no está disponible.")
+                    raise ValidationError(f"El timeslot {ts.id} (de {ts.inicio}) ya no está disponible.")
                 precio_total += ts.precio
 
             # Crear reserva
@@ -84,7 +89,7 @@ class ReservaService:
 
         except Exception as e:
             self.db.session.rollback()
-            raise ValueError(f"Error al crear la reserva: {str(e)}")
+            raise AppError(f"Error al crear la reserva: {str(e)}")
 
 
     # ESTO ES PELIGROSO: cuando borro una reserva quiero que se liberen los timeslots asociados.
@@ -107,7 +112,7 @@ class ReservaService:
         try:
             reserva = self.reserva_repo.get_by_id(reserva_id)
             if not reserva:
-                raise ValueError("Reserva no encontrada")
+                raise NotFoundError("Reserva no encontrada")
 
             links = ReservaTimeslot.query.filter_by(reserva_id=reserva_id).all()
             timeslot_ids = [link.timeslot_id for link in links]
@@ -134,7 +139,7 @@ class ReservaService:
 
         except Exception as e:
             self.db.session.rollback()
-            raise ValueError(f"Error al cancelar la reserva: {str(e)}")
+            raise AppError(f"Error al cancelar la reserva: {str(e)}")
 
     def marcar_reserva_pagada(self, reserva_id):
         """
@@ -143,7 +148,7 @@ class ReservaService:
         try:
             reserva = self.reserva_repo.get_by_id(reserva_id)
             if not reserva:
-                raise ValueError("Reserva no encontrada")
+                raise NotFoundError("Reserva no encontrada")
             
             from app.models.enums import ReservaEstado
             reserva.estado = ReservaEstado.PAGADO
@@ -151,4 +156,4 @@ class ReservaService:
             return reserva
         except Exception as e:
             self.db.session.rollback()
-            raise ValueError(f"Error al actualizar el pago: {str(e)}")
+            raise AppError(f"Error al actualizar el pago: {str(e)}")
