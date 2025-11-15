@@ -8,6 +8,14 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configuración JWT
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'tu-secret-key-super-segura-cambiala-en-produccion')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dsasdasd32e453rtfqwetf312478')
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hora en segundos
     JWT_REFRESH_TOKEN_EXPIRES = 2592000  # 30 días en segundos
+    
+    # Configuración Mercado Pago
+    MERCADOPAGO_ACCESS_TOKEN = os.getenv('MERCADOPAGO_ACCESS_TOKEN', '')
+    MERCADOPAGO_PUBLIC_KEY = os.getenv('MERCADOPAGO_PUBLIC_KEY', '')
+    # URL base del frontend para las redirecciones después del pago
+    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    # URL base del backend para webhooks
+    BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:5000')

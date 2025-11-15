@@ -135,20 +135,3 @@ class ReservaService:
         except Exception as e:
             self.db.session.rollback()
             raise ValueError(f"Error al cancelar la reserva: {str(e)}")
-
-    def marcar_reserva_pagada(self, reserva_id):
-        """
-        Marca una reserva como pagada (cambia el estado a PAGADO).
-        """
-        try:
-            reserva = self.reserva_repo.get_by_id(reserva_id)
-            if not reserva:
-                raise ValueError("Reserva no encontrada")
-            
-            from app.models.enums import ReservaEstado
-            reserva.estado = ReservaEstado.PAGADO
-            self.db.session.commit()
-            return reserva
-        except Exception as e:
-            self.db.session.rollback()
-            raise ValueError(f"Error al actualizar el pago: {str(e)}")
