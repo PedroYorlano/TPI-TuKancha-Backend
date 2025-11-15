@@ -15,7 +15,7 @@ class ClubHorario(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    club = db.relationship("Club", backref="horarios")
+    club = db.relationship("Club", back_populates="horarios")
 
     def __repr__(self):
         return f"<ClubHorario {self.dia.value} {self.abre}-{self.cierra}>"

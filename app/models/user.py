@@ -16,7 +16,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    club = db.relationship("Club", backref="usuarios")
+    club = db.relationship("Club", back_populates="usuarios")
 
     def __repr__(self):
         return f"<User {self.email}>"

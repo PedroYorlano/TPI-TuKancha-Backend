@@ -1,16 +1,20 @@
 from app.repositories.club_repo import ClubRepository
 from app.models.club import Club
 from app.repositories.direccion_repo import DireccionRepository
-from app.models.direccion import Direccion
 from app.repositories.club_horario_repo import ClubHorarioRepository
 from app.models.club_horario import ClubHorario
 from app.repositories.user_repo import UserRepository
 from app.repositories.rol_repo import RolRepository
 from app.models.user import User
-from app.models.enums import DiaSemana
+from app.models.torneo import Torneo
+from app.models.timeslot import Timeslot
+from app.models.cancha import Cancha
+from app.models.enums import DiaSemana, TorneoEstado, TimeslotEstado
 from werkzeug.security import generate_password_hash
-from datetime import datetime, time
+from datetime import datetime
 from app import db
+
+from app.errors import AppError, ConflictError, NotFoundError, ValidationError
 
 class ClubService:
     """
@@ -55,7 +59,10 @@ class ClubService:
         Returns:
             list[Club]: Lista de todos los clubes
         """
-        return self.club_repo.get_all()
+        clubes = self.club_repo.get_all()
+        if not clubes:
+            raise NotFoundError("No se encontraron clubes")
+        return clubes
 
     def get_by_id(self, id):
         """
@@ -70,7 +77,10 @@ class ClubService:
         Raises:
             ValueError: Si el ID no es válido
         """
-        return self.club_repo.get_by_id(id)
+        club = self.club_repo.get_by_id(id)
+        if not club:
+            raise NotFoundError("Club no encontrado")
+        return club
 
     def create(self, data):
         """
@@ -101,23 +111,23 @@ class ClubService:
         required_fields = ['nombre', 'cuit', 'telefono', 'direccion', 'usuario']
         for field in required_fields:
             if field not in data:
-                raise ValueError(f"El campo '{field}' es requerido")
+                raise ValidationError(f"El campo '{field}' es requerido")
 
         # Validar campos requeridos de dirección
         required_direccion_fields = ['calle', 'numero', 'ciudad', 'provincia']
         for field in required_direccion_fields:
             if field not in data['direccion'] or not data['direccion'][field]:
-                raise ValueError(f"El campo 'direccion.{field}' es requerido")
+                raise ValidationError(f"El campo 'direccion.{field}' es requerido")
 
         # Validar campos requeridos de usuario
         required_usuario_fields = ['nombre', 'email', 'password', 'rol']
         for field in required_usuario_fields:
             if field not in data['usuario'] or not data['usuario'][field]:
-                raise ValueError(f"El campo 'usuario.{field}' es requerido")
+                raise ValidationError(f"El campo 'usuario.{field}' es requerido")
 
         # Validar que el email no esté en uso
         if self.user_repo.get_by_email(data['usuario']['email']):
-            raise ValueError("El email ya está en uso")
+            raise ConflictError("El email ya está en uso")
 
         try:
             # PASO 1: Crear la dirección
@@ -139,24 +149,24 @@ class ClubService:
                 for horario_data in data['horarios']:
                     # Validar campos requeridos
                     if 'dia' not in horario_data or 'abre' not in horario_data or 'cierra' not in horario_data:
-                        raise ValueError("Cada horario debe tener 'dia', 'abre' y 'cierra'")
+                        raise ValidationError("Cada horario debe tener 'dia', 'abre' y 'cierra'")
                     
                     # Convertir el día de español a enum
                     dia_str = horario_data['dia'].lower()
                     dia_enum = self.DIA_MAPPING.get(dia_str)
                     if not dia_enum:
-                        raise ValueError(f"Día inválido: {horario_data['dia']}. Debe ser uno de: {', '.join(self.DIA_MAPPING.keys())}")
+                        raise ValidationError(f"Día inválido: {horario_data['dia']}. Debe ser uno de: {', '.join(self.DIA_MAPPING.keys())}")
                     
                     # Convertir strings de hora a objetos time
                     try:
                         abre = datetime.strptime(horario_data['abre'], '%H:%M').time()
                         cierra = datetime.strptime(horario_data['cierra'], '%H:%M').time()
                     except ValueError as e:
-                        raise ValueError(f"Formato de hora inválido. Use HH:MM (ej: 09:00)")
+                        raise ValidationError(f"Formato de hora inválido. Use HH:MM (ej: 09:00)")
                     
                     # Validar que abre sea antes que cierra
                     if abre >= cierra:
-                        raise ValueError(f"La hora de apertura debe ser anterior a la de cierre para {horario_data['dia']}")
+                        raise ValidationError(f"La hora de apertura debe ser anterior a la de cierre para {horario_data['dia']}")
                     
                     # Crear el horario
                     nuevo_horario = ClubHorario(
@@ -174,7 +184,7 @@ class ClubService:
             rol_nombre = usuario_data['rol'].lower()
             rol = self.rol_repo.get_by_name(rol_nombre)
             if not rol:
-                raise ValueError(f"El rol '{usuario_data['rol']}' no existe en el sistema")
+                raise ValidationError(f"El rol '{usuario_data['rol']}' no existe en el sistema")
             
             # Hash de la contraseña
             hash_password = generate_password_hash(usuario_data['password'])
@@ -195,20 +205,12 @@ class ClubService:
 
             return nuevo_club
         
-        except ValueError as e:
+        except ValidationError as e:
             self.db.session.rollback()
             raise e
         except Exception as e:
             self.db.session.rollback()
-            import traceback
-            print("=" * 50)
-            print("ERROR EN CLUB SERVICE - CREATE:")
-            print(f"Tipo de error: {type(e).__name__}")
-            print(f"Mensaje: {str(e)}")
-            print("Traceback completo:")
-            traceback.print_exc()
-            print("=" * 50)
-            raise Exception(f"Error al crear el club: {str(e)}")
+            raise AppError(f"Error al crear el club: {str(e)}")
         
     def update(self, club_id, data):
         """
@@ -234,7 +236,7 @@ class ClubService:
         # Obtener el club existente
         club = self.club_repo.get_by_id(club_id)
         if not club:
-            raise ValueError("Club no encontrado")
+            raise NotFoundError("Club no encontrado")
         
         # Manejar la actualización de dirección si se proporciona
         try:
@@ -243,44 +245,54 @@ class ClubService:
                 direccion = self.direccion_repo.find_or_create_direccion(direccion_data)
                 club.direccion_id = direccion.id
         except Exception as e:
-            raise Exception(f"Error al actualizar dirección: {e}")
+            raise AppError(f"Error al actualizar dirección: {e}")
 
         for key, value in data.items():
             if hasattr(club, key):
                 setattr(club, key, value)
         
         try:
-            self.club_repo.update(club)
+            self.club_repo.update(club, data)
             self.db.session.commit()
             return club
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al actualizar: {e}")
+            raise AppError(f"Error al actualizar: {e}")
 
     def delete(self, club_id):
-        """
-        Elimina un club del sistema.
+        club = self.get_by_id(club_id)
         
-        Realiza la eliminación del club y todos sus recursos asociados.
-        
-        Args:
-            club_id (int): ID del club a eliminar
-            
-        Returns:
-            Club: El club eliminado
-            
-        Raises:
-            ValueError: Si el club no existe
-            Exception: Si ocurre un error durante la eliminación
-        """
         try:
-            club = self.club_repo.get_by_id(club_id)
-            if not club:
-                raise ValueError("Club no encontrado")
-            self.club_repo.delete(club)
+            # VALIDACIONES DE LÓGICA DE NEGOCIO
+            
+            torneos_activos = db.session.query(Torneo).filter_by(
+                club_id=club_id, 
+                estado=TorneoEstado.ACTIVO
+            ).first()
+            if torneos_activos:
+                raise ConflictError(f"No se puede eliminar el club. Tiene torneos activos ('{torneos_activos.nombre}').")
+
+            reservas_futuras = db.session.query(Timeslot)\
+                .join(Cancha, Timeslot.cancha_id == Cancha.id)\
+                .filter(
+                    Cancha.club_id == club_id,
+                    Timeslot.estado.in_([TimeslotEstado.RESERVADO, TimeslotEstado.PAGADO]),
+                    Timeslot.inicio >= datetime.utcnow()
+                ).first()
+            
+            if reservas_futuras:
+                raise ConflictError("No se puede eliminar el club. Tiene reservas futuras activas.")
+
+            # Ejecutar el borrado
+            self.club_repo.delete(club)            
             self.db.session.commit()
-            return club
-        except Exception as e:
+            return club 
+            
+        except (NotFoundError, ConflictError) as e:
             self.db.session.rollback()
-            raise Exception(f"Error al eliminar: {e}")
+            raise e
+        except Exception as e:
+            # Si es un error inesperado (ej: fallo de DB)
+            self.db.session.rollback()
+            raise AppError(f"Error al eliminar el club: {str(e)}")
 

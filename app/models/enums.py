@@ -37,3 +37,4 @@ class TimeslotEstado(Enum):
     RESERVADO = "RESERVADO"
     BLOQUEADO = "BLOQUEADO"
     NO_GENERADO = "NO_GENERADO"
+    PAGADO = "PAGADO"
