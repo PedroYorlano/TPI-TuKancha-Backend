@@ -72,7 +72,7 @@ class PartidoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al crear el partido: {str(e)}")
+            raise AppError(f"Error al crear el partido: {str(e)}")
     
     def update(self, partido_id, partido_data):
         """
@@ -93,7 +93,7 @@ class PartidoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al actualizar el partido: {str(e)}")
+            raise AppError(f"Error al actualizar el partido: {str(e)}")
     
     def registrar_resultado(self, partido_id, data):
         """
@@ -132,7 +132,7 @@ class PartidoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al registrar el resultado: {str(e)}")
+            raise AppError(f"Error al registrar el resultado: {str(e)}")
     
     def delete(self, partido_id):
         """
@@ -149,4 +149,4 @@ class PartidoService:
             
         except Exception as e:
             self.db.session.rollback()
-            raise Exception(f"Error al eliminar el partido: {str(e)}")
+            raise AppError(f"Error al eliminar el partido: {str(e)}")

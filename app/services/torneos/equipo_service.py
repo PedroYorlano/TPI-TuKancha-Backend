@@ -3,7 +3,7 @@ from app.models.equipo import Equipo
 from app import db
 from datetime import datetime
 
-from app.errors import NotFoundError, ValidationError, AppError
+from app.errors import NotFoundError, ValidationError, AppError, ConflictError
 
 class EquipoService:
     """
@@ -80,7 +80,7 @@ class EquipoService:
         
         # Verificar si ya existe un equipo con el mismo nombre en el torneo
         if self.equipo_repo.existe_equipo_en_torneo(equipo_data['nombre'], equipo_data['torneo_id']):
-            raise ValidationError("Ya existe un equipo con este nombre en el torneo")
+            raise ConflictError("Ya existe un equipo con este nombre en el torneo")
         
         try:
             # Crear una instancia de Equipo con los datos
@@ -130,7 +130,7 @@ class EquipoService:
                 equipo.torneo_id, 
                 exclude_id=equipo_id
             ):
-                raise ValidationError("Ya existe otro equipo con este nombre en el torneo")
+                raise ConflictError("Ya existe otro equipo con este nombre en el torneo")
         
         try:
             # Actualizar el equipo

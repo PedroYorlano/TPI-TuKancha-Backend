@@ -2,7 +2,7 @@ from app.repositories.rol_repo import RolRepository
 from app.models.rol import Rol
 from app import db
 
-from app.errors import ValidationError, NotFoundError, AppError
+from app.errors import ValidationError, NotFoundError, AppError, ConflictError
 
 class RolService:
     def __init__(self, db):
@@ -34,7 +34,7 @@ class RolService:
                 raise ValidationError(f"El campo '{field}' es requerido")
         
         if self.rol_repo.get_by_name(rol['nombre']):
-            raise ValidationError("El nombre ya está en uso")
+            raise ConflictError("El nombre ya está en uso")
 
         try:
             nuevo_rol = Rol(
