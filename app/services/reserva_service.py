@@ -119,6 +119,11 @@ class ReservaService:
             reserva = self.reserva_repo.get_by_id(reserva_id)
             if not reserva:
                 raise NotFoundError("Reserva no encontrada")
+            
+             # Verificar que la reserva no esté ya cancelada
+            from app.models.enums import ReservaEstado
+            if reserva.estado == ReservaEstado.CANCELADA:
+                raise ValidationError("La reserva ya está cancelada")
 
             links = ReservaTimeslot.query.filter_by(reserva_id=reserva_id).all()
             timeslot_ids = [link.timeslot_id for link in links]
@@ -136,10 +141,10 @@ class ReservaService:
             # borrar links
             for link in links:
                 self.db.session.delete(link)
+           
+            # Cambiar estado de la reserva a CANCELADA en lugar de eliminarla
+            reserva.estado = ReservaEstado.CANCELADA
 
-            # borrar reserva
-            self.db.session.delete(reserva)
-            
             self.db.session.commit()
             return {"mensaje": "Reserva cancelada y timeslots liberados."}
 
