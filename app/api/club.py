@@ -23,7 +23,6 @@ def obtener_club(id):
     return jsonify(club_schema.dump(club))
 
 # Crear un nuevo club (PÚBLICO - para registro de nuevos clubes)
-# Si quieres que solo admins puedan crear clubes, agrega @jwt_required() y @role_required(['admin'])
 @bp_club.post('/')
 def crear_club():
     data = request.get_json()
