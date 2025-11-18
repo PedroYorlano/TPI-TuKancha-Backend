@@ -30,6 +30,11 @@ class UserService:
             raise NotFoundError("No se encontraron usuarios")
         return users
     
+    def email_exists(self, email):
+        """Verifica si un email ya está registrado en el sistema"""
+        user = self.user_repo.get_by_email(email)
+        return user is not None
+    
     def create(self, data):
         required_fields = ['email', 'rol_id', 'nombre', 'password', 'club_id']
 

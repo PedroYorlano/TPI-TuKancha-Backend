@@ -31,6 +31,15 @@ def obtener_usuarios_por_club(club_id):
     usuarios = user_service.get_by_club(club_id)
     return jsonify(users_schema.dump(usuarios)), 200
 
+@bp_user.get('/check-email/<email>')
+def verificar_email(email):
+    """Endpoint público para verificar si un email ya está registrado"""
+    existe = user_service.email_exists(email)
+    return jsonify({
+        "email": email,
+        "registrado": existe
+    }), 200
+
 @bp_user.post('/')
 @jwt_required()
 @role_required(['admin'])
