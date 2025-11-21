@@ -21,10 +21,7 @@ class TorneoService:
         self.torneo_repo = TorneoRepository()
     
     def get_all(self):
-        torneos = self.torneo_repo.get_all()
-        if not torneos:
-            raise NotFoundError("No se encontraron torneos")
-        return torneos
+        return self.torneo_repo.get_all()
     
     def get_by_id(self, torneo_id):
         torneo = self.torneo_repo.get_by_id(torneo_id)

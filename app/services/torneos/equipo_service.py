@@ -24,10 +24,7 @@ class EquipoService:
         Returns:
             list[Equipo]: Lista de todos los equipos
         """
-        equipos = self.equipo_repo.get_all()
-        if not equipos:
-            raise NotFoundError("No se encontraron equipos")
-        return equipos
+        return self.equipo_repo.get_all()
     
     def get_by_id(self, equipo_id):
         """

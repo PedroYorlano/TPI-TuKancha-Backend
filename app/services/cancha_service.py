@@ -24,10 +24,7 @@ class CanchaService:
         Returns:
             list[Cancha]: Lista de todas las canchas
         """
-        canchas = self.cancha_repo.get_all()
-        if not canchas:
-            raise NotFoundError("No se encontraron canchas")
-        return canchas
+        return self.cancha_repo.get_all()
 
     
     def get_by_club(self, club_id):

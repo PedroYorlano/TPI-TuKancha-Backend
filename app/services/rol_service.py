@@ -10,10 +10,7 @@ class RolService:
         self.rol_repo = RolRepository()
     
     def get_all(self):
-        rol = self.rol_repo.get_all()
-        if not rol:
-            raise NotFoundError("No se encontraron roles")
-        return rol
+        return self.rol_repo.get_all()
     
     def get_by_id(self, id):
         rol = self.rol_repo.get_by_id(id)

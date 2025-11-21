@@ -21,10 +21,7 @@ class PartidoService:
         """
         Obtiene todos los partidos
         """
-        partidos = self.partido_repo.get_all()
-        if not partidos:
-            raise NotFoundError("No se encontraron partidos")
-        return partidos
+        return self.partido_repo.get_all()
     
     def get_by_id(self, partido_id):
         """

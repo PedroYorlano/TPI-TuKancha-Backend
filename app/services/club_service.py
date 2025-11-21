@@ -59,10 +59,7 @@ class ClubService:
         Returns:
             list[Club]: Lista de todos los clubes
         """
-        clubes = self.club_repo.get_all()
-        if not clubes:
-            raise NotFoundError("No se encontraron clubes")
-        return clubes
+        return self.club_repo.get_all()
 
     def get_by_id(self, id):
         """

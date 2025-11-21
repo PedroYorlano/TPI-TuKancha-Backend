@@ -13,10 +13,7 @@ class UserService:
         self.rol_repo = RolRepository()
     
     def get_all(self):
-        users = self.user_repo.get_all()
-        if not users:
-            raise NotFoundError("No se encontraron usuarios")
-        return users
+        return self.user_repo.get_all()
     
     def get_by_id(self, id):
         user = self.user_repo.get_by_id(id)
