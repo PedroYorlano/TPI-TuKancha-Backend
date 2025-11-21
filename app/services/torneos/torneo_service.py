@@ -59,8 +59,6 @@ class TorneoService:
             raise ValidationError("El parámetro 'club_id' es requerido")
         
         torneos = self.torneo_repo.get_by_club(club_id)
-        if not torneos:
-            raise NotFoundError(f"No se encontraron torneos para el club con ID {club_id}")
         return torneos
     
     def create(self, torneo_data):
