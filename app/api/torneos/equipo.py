@@ -27,7 +27,7 @@ def get_equipo(equipo_id):
 
 # Crear un nuevo equipo
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 @bp_equipo.post("/")
 def create_equipo():
     equipo_data = request.get_json()
@@ -39,7 +39,7 @@ def create_equipo():
 
 # Actualizar un equipo
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 @bp_equipo.put("/<int:equipo_id>")
 def update_equipo(equipo_id):
     equipo_data = request.get_json()
@@ -51,7 +51,7 @@ def update_equipo(equipo_id):
 
 # Eliminar un equipo
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 @bp_equipo.delete("/<int:equipo_id>")
 def delete_equipo(equipo_id):
     equipo_service.delete(equipo_id)

@@ -86,8 +86,9 @@ def get_tabla_de_posiciones(id_torneo):
         }), 200
 
 # Crear un nuevo torneo
+@bp_torneo.post("/")
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 def create_torneo():
     torneo = torneo_service.create(request.get_json())
     return jsonify({
@@ -99,7 +100,7 @@ def create_torneo():
 # Actualizar un torneo
 @bp_torneo.put("/<int:id_torneo>")
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 def update_torneo(id_torneo):
     torneo = torneo_service.update(id_torneo, request.get_json())
     return jsonify({
@@ -111,7 +112,7 @@ def update_torneo(id_torneo):
 # Cambiar estado de un torneo
 @bp_torneo.put("/<int:id_torneo>/estado")
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 def cambiar_estado_torneo(id_torneo):
     data = request.get_json()
     torneo = torneo_service.cambiar_estado(id_torneo, data)
@@ -125,7 +126,7 @@ def cambiar_estado_torneo(id_torneo):
 # Agregar equipo a un torneo
 @bp_torneo.put("/<int:id_torneo>/equipo")
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 def agregar_equipo_torneo(id_torneo):
     torneo = torneo_service.agregar_equipo(id_torneo, request.get_json())
     return jsonify({
@@ -137,7 +138,7 @@ def agregar_equipo_torneo(id_torneo):
 # Eliminar un torneo
 @bp_torneo.delete("/<int:id_torneo>")
 @jwt_required()
-@role_required(["Admin"])
+@role_required(["admin", "org_torneo"])
 def delete_torneo(id_torneo):
     torneo_service.delete(id_torneo)
     return jsonify({

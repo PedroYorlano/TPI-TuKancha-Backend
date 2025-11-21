@@ -24,7 +24,7 @@ def login():
             "refresh_token": "eyJ0eXAiOiJKV1QiLCJ...",
             "user": {
                 "id": 1,
-                "nombre": "Admin",
+                "nombre": "admin",
                 "email": "admin@clubejemplo.com",
                 "rol": "admin",
                 "club_id": 1,
@@ -95,7 +95,7 @@ def get_current_user():
     Response (200):
         {
             "id": 1,
-            "nombre": "Admin",
+            "nombre": "admin",
             "email": "admin@clubejemplo.com",
             "rol": "admin",
             "club_id": 1
