@@ -54,6 +54,15 @@ def get_torneos_por_fecha():
             }
         }), 200
 
+# Obtener torneos por club
+@bp_torneo.get("/club/<int:club_id>")
+def get_torneos_por_club(club_id):
+    torneos = torneo_service.get_by_club(club_id)
+    return jsonify({
+            "status": "success",
+            "data": torneos_schema.dump(torneos)
+        }), 200
+
 # Obtener equipos de un torneo
 @bp_torneo.get("/<int:id_torneo>/equipos")
 def obtener_equipos_torneo(id_torneo):

@@ -53,6 +53,16 @@ class TorneoService:
             raise NotFoundError("No se encontraron torneos para esta(s) fecha(s)")
         return torneo_por_fecha
     
+    def get_by_club(self, club_id):
+        """Obtiene todos los torneos de un club específico."""
+        if not club_id:
+            raise ValidationError("El parámetro 'club_id' es requerido")
+        
+        torneos = self.torneo_repo.get_by_club(club_id)
+        if not torneos:
+            raise NotFoundError(f"No se encontraron torneos para el club con ID {club_id}")
+        return torneos
+    
     def create(self, torneo_data):
         required_fields = ['nombre', 'club_id']
         for field in required_fields:

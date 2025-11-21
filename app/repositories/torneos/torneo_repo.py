@@ -121,3 +121,14 @@ class TorneoRepository:
             query = query.filter(Torneo.fecha_inicio <= fecha_fin)
             
         return query.order_by(Torneo.fecha_inicio).all()
+    
+    def get_by_club(self, club_id):
+        """Obtiene todos los torneos de un club.
+        
+        Args:
+            club_id (int): ID del club
+            
+        Returns:
+            list[Torneo]: Lista de torneos del club
+        """
+        return Torneo.query.filter_by(club_id=club_id).order_by(Torneo.fecha_inicio.desc()).all()
