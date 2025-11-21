@@ -31,10 +31,10 @@ def seed_data():
             print("Creando Roles...")
             rol_admin = Rol(nombre="admin")
             rol_encargado = Rol(nombre="encargado")
-            rol_recepcionista = Rol(nombre="recepcionista")
-            db.session.add_all([rol_admin, rol_encargado, rol_recepcionista])
+            rol_org_torneo = Rol(nombre="org_torneo")
+            db.session.add_all([rol_admin, rol_encargado, rol_org_torneo])
             db.session.flush() 
-            print("✅ Roles creados: admin, encargado, recepcionista")
+            print("✅ Roles creados: admin, encargado, org_torneo")
         
         # 2. Crear Usuario Admin (OMITIDO - los usuarios se crean con sus clubes)
         # No creamos usuario admin sin club porque club_id es NOT NULL
