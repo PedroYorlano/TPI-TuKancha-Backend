@@ -38,8 +38,6 @@ class CanchaService:
             list[Cancha]: Lista de canchas del club
         """
         canchas = self.cancha_repo.get_by_club(club_id)
-        if not canchas:
-            raise NotFoundError("No se encontraron canchas")
         return canchas
 
     def get_by_id(self, cancha_id):
