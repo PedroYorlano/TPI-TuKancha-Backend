@@ -112,13 +112,19 @@ class EquipoService:
         Raises:
             ValidationError: Si el equipo no existe o hay datos inválidos
         """
-        required_fields = ['nombre', 'torneo_id', 'representante', 'telefono', 'email']
+        equipo = self.equipo_repo.get_by_id(equipo_id)
+        if not equipo:
+            raise NotFoundError("Equipo no encontrado")
+        
+        # Validar campos requeridos (sin incluir torneo_id)
+        required_fields = ['nombre', 'representante', 'telefono', 'email']
         for field in required_fields:
             if field not in equipo_data or not equipo_data[field]:
                 raise ValidationError(f"El campo '{field}' es requerido")
-        equipo = self.equipo_repo.get_by_id(equipo_id)
-        if not equipo:
-            raise ValidationError("Equipo no encontrado")
+        
+        # El torneo_id no se puede cambiar
+        if 'torneo_id' in equipo_data and equipo_data['torneo_id'] != equipo.torneo_id:
+            raise ValidationError("No se puede cambiar el torneo de un equipo")
         
         # Verificar si se está intentando cambiar el nombre y ya existe otro con el mismo nombre
         if 'nombre' in equipo_data and equipo_data['nombre'] != equipo.nombre:
