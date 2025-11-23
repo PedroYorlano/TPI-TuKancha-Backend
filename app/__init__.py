@@ -112,4 +112,7 @@ def create_app():
     from app.api.torneos.partido import bp_partido
     app.register_blueprint(bp_partido)
     
+    from app.api.reportes import bp_reportes
+    app.register_blueprint(bp_reportes)
+    
     return app
