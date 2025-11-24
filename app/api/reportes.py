@@ -1,13 +1,10 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from app.auth.decorators import role_required
-
-from app.reports.listado_reservas_por_cliente import build_reservas_por_cliente
-from app.reports.listado_reservas_por_cancha import build_reservas_por_cancha
-from app.reports.canchas_mas_utilizadas import build_canchas_mas_utilizadas
-from app.reports.utilizacion_mensual import build_utilizacion_mensual
+from app.services.reporte_service import ReporteService
 
 bp_reportes = Blueprint("reportes", __name__, url_prefix="/api/v1/reportes")
+reporte_service = ReporteService()
 
 
 @bp_reportes.get('/reservas-por-cliente')
@@ -23,7 +20,7 @@ def reservas_por_cliente():
     q = request.args.get('q')
     cliente_email = request.args.get('cliente_email')
 
-    resultado = build_reservas_por_cliente(q=q, cliente_email=cliente_email)
+    resultado = reporte_service.get_reservas_por_cliente(q=q, cliente_email=cliente_email)
 
     return jsonify(resultado), 200
 
@@ -43,7 +40,7 @@ def reservas_por_cancha():
     fecha_inicio = request.args.get('fecha_inicio')
     fecha_fin = request.args.get('fecha_fin')
 
-    resultado = build_reservas_por_cancha(cancha_id=cancha_id, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    resultado = reporte_service.get_reservas_por_cancha(cancha_id=cancha_id, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
 
     return jsonify(resultado), 200
 
@@ -63,7 +60,7 @@ def canchas_mas_utilizadas():
     fecha_inicio = request.args.get('fecha_inicio')
     fecha_fin = request.args.get('fecha_fin')
 
-    resultado = build_canchas_mas_utilizadas(limit=limit, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    resultado = reporte_service.get_canchas_mas_utilizadas(limit=limit, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
     return jsonify(resultado), 200
 
 
@@ -82,5 +79,5 @@ def utilizacion_mensual():
     fecha_inicio = request.args.get('fecha_inicio')
     fecha_fin = request.args.get('fecha_fin')
 
-    resultado = build_utilizacion_mensual(cancha_id=cancha_id, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    resultado = reporte_service.get_utilizacion_mensual(cancha_id=cancha_id, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
     return jsonify(resultado), 200
