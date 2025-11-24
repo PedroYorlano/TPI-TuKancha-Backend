@@ -2,10 +2,10 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from app.auth.decorators import role_required
 
-from reports.listado_reservas_por_cliente import build_reservas_por_cliente
-from reports.listado_reservas_por_cancha import build_reservas_por_cancha
-from reports.canchas_mas_utilizadas import build_canchas_mas_utilizadas
-from reports.utilizacion_mensual import build_utilizacion_mensual
+from app.reports.listado_reservas_por_cliente import build_reservas_por_cliente
+from app.reports.listado_reservas_por_cancha import build_reservas_por_cancha
+from app.reports.canchas_mas_utilizadas import build_canchas_mas_utilizadas
+from app.reports.utilizacion_mensual import build_utilizacion_mensual
 
 bp_reportes = Blueprint("reportes", __name__, url_prefix="/api/v1/reportes")
 

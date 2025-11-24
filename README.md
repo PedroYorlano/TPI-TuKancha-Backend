@@ -213,67 +213,169 @@ Eliminar un timeslot.
 ### `GET /api/v1/torneos`
 Listar todos los torneos.
 - **Roles**: Público
+- **Respuesta (200)**: Lista de todos los torneos
+
+### `GET /api/v1/torneos/activos`
+Obtener torneos activos.
+- **Roles**: Público
+- **Respuesta (200)**: Lista de torneos activos
+
+### `GET /api/v1/torneos/fecha?fecha_inicio=<fecha_inicio>&fecha_fin=<fecha_fin>`
+Obtener torneos por rango de fechas.
+- **Roles**: Público
+- **Parámetros**: 
+  - `fecha_inicio` (string, requerido): Fecha de inicio en formato YYYY-MM-DD
+  - `fecha_fin` (string, requerido): Fecha de fin en formato YYYY-MM-DD
+- **Respuesta (200)**: Lista de torneos en el rango de fechas
+
+### `GET /api/v1/torneos/club/<club_id>`
+Obtener torneos por club.
+- **Roles**: Público
+- **Respuesta (200)**: Lista de torneos del club
+
+### `GET /api/v1/torneos/<id_torneo>`
+Obtener detalles de un torneo.
+- **Roles**: Público
+- **Respuesta (200)**: Detalles completos del torneo
 
 ### `POST /api/v1/torneos`
 Crear un nuevo torneo.
-- **Roles**: Admin, Encargado
+- **Roles**: Admin, org_torneo
+- **Body (JSON)**: Datos del torneo
+- **Respuesta (201)**: Torneo creado exitosamente
 
-### `GET /api/v1/torneos/<id>`
-Obtener un torneo por ID.
-- **Roles**: Público
-
-### `PUT /api/v1/torneos/<id>`
+### `PUT /api/v1/torneos/<id_torneo>`
 Actualizar un torneo.
-- **Roles**: Admin, Encargado
+- **Roles**: Admin, org_torneo
+- **Body (JSON)**: Datos actualizados del torneo
+- **Respuesta (200)**: Torneo actualizado exitosamente
 
-### `DELETE /api/v1/torneos/<id>`
-Eliminar un torneo.
-- **Roles**: Admin
+### `PUT /api/v1/torneos/<id_torneo>/estado`
+Cambiar estado de un torneo.
+- **Roles**: Admin, org_torneo
+- **Body (JSON)**: `{"estado": "nuevo_estado"}`
+- **Respuesta (200)**: Estado del torneo actualizado
 
 ## Equipos
 
 ### `GET /api/v1/equipos`
 Listar todos los equipos.
 - **Roles**: Público
+- **Respuesta (200)**: Lista de todos los equipos
+
+### `GET /api/v1/equipos/<equipo_id>`
+Obtener detalles de un equipo.
+- **Roles**: Público
+- **Respuesta (200)**: Detalles del equipo
 
 ### `POST /api/v1/equipos`
 Crear un nuevo equipo.
-- **Roles**: Usuarios autenticados
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Body (JSON)**: Datos del equipo
+- **Respuesta (201)**: Equipo creado exitosamente
 
-### `GET /api/v1/equipos/<id>`
-Obtener un equipo por ID.
-- **Roles**: Público
-
-### `PUT /api/v1/equipos/<id>`
+### `PUT /api/v1/equipos/<equipo_id>`
 Actualizar un equipo.
-- **Roles**: Propietario del equipo
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Body (JSON)**: Datos actualizados del equipo
+- **Respuesta (200)**: Equipo actualizado exitosamente
 
-### `DELETE /api/v1/equipos/<id>`
+### `DELETE /api/v1/equipos/<equipo_id>`
 Eliminar un equipo.
-- **Roles**: Admin, Propietario del equipo
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Respuesta (200)**: Equipo eliminado exitosamente
 
 ## Partidos
 
 ### `GET /api/v1/partidos`
-Listar todos los partidos.
+Obtener todos los partidos.
 - **Roles**: Público
+- **Respuesta (200)**: Lista de todos los partidos
+
+### `GET /api/v1/partidos/<id>`
+Obtener detalles de un partido.
+- **Roles**: Público
+- **Respuesta (200)**: Detalles del partido
 
 ### `GET /api/v1/partidos/torneo/<torneo_id>`
 Obtener partidos por torneo.
 - **Roles**: Público
-
-### `GET /api/v1/partidos/equipo/<equipo_id>`
-Obtener partidos por equipo.
-- **Roles**: Público
+- **Respuesta (200)**: Lista de partidos del torneo
 
 ### `POST /api/v1/partidos`
 Crear un nuevo partido.
-- **Roles**: Admin, Encargado
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Body (JSON)**: Datos del partido
+- **Respuesta (201)**: Partido creado exitosamente
 
 ### `PUT /api/v1/partidos/<id>`
 Actualizar un partido.
-- **Roles**: Admin, Encargado
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Body (JSON)**: Datos actualizados del partido
+- **Respuesta (200)**: Partido actualizado exitosamente
+
+### `PATCH /api/v1/partidos/<id>/resultado`
+Registrar resultado de un partido.
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Body (JSON)**: `{"goles_local": 2, "goles_visitante": 1}`
+- **Respuesta (200)**: Resultado registrado exitosamente
 
 ### `DELETE /api/v1/partidos/<id>`
 Eliminar un partido.
+- **Roles**: Admin, org_torneo
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Respuesta (200)**: Partido eliminado exitosamente
+
+## Tabla de Posiciones
+
+### `GET /api/v1/torneos/<id_torneo>/posiciones`
+Obtener tabla de posiciones de un torneo.
+- **Roles**: Público
+- **Respuesta (200)**: Tabla de posiciones con equipos ordenados por puntaje
+
+## Reportes
+
+### `GET /api/v1/reportes/reservas-por-cliente`
+Obtener reporte de reservas agrupadas por cliente.
 - **Roles**: Admin
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Parámetros**:
+  - `q` (string, opcional): Búsqueda por nombre o email (contiene)
+  - `cliente_email` (string, opcional): Búsqueda exacta por email
+- **Respuesta (200)**: Lista de clientes con sus reservas
+
+### `GET /api/v1/reportes/reservas-por-cancha`
+Obtener reporte de reservas agrupadas por cancha.
+- **Roles**: Admin
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Parámetros**:
+  - `cancha_id` (int, opcional): Filtrar por ID de cancha
+  - `fecha_inicio` (string, opcional): Fecha de inicio en formato YYYY-MM-DD
+  - `fecha_fin` (string, opcional): Fecha de fin en formato YYYY-MM-DD
+- **Respuesta (200)**: Lista de canchas con sus reservas
+
+### `GET /api/v1/reportes/canchas-mas-utilizadas`
+Obtener ranking de canchas más utilizadas.
+- **Roles**: Admin
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Parámetros**:
+  - `limit` (int, opcional, default=10): Número máximo de canchas a devolver
+  - `fecha_inicio` (string, opcional): Fecha de inicio en formato YYYY-MM-DD
+  - `fecha_fin` (string, opcional): Fecha de fin en formato YYYY-MM-DD
+- **Respuesta (200)**: Lista de canchas ordenadas por uso
+
+### `GET /api/v1/reportes/utilizacion-mensual`
+Obtener datos para gráfico de utilización mensual.
+- **Roles**: Admin
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Parámetros**:
+  - `cancha_id` (int, opcional): Filtrar por ID de cancha
+  - `fecha_inicio` (string, opcional): Fecha de inicio en formato YYYY-MM-DD
+  - `fecha_fin` (string, opcional): Fecha de fin en formato YYYY-MM-DD
+- **Respuesta (200)**: Datos de utilización mensual para gráficos
